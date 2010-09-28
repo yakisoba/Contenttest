@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.util.Log;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 public class ContactPickerActivity extends Activity {
@@ -20,14 +19,14 @@ public class ContactPickerActivity extends Activity {
 		try {
 			fillData();
 		} catch (InterruptedException e) {
-			// TODO ©“®¶¬‚³‚ê‚½ catch ƒuƒƒbƒN
+			// TODO è‡ªå‹•ç”Ÿæˆã•ã‚ŒãŸ catch ãƒ–ãƒ­ãƒƒã‚¯
 			e.printStackTrace();
 		}
 	}
 
-	// ƒRƒ“ƒ^ƒNƒgƒf[ƒ^‚ğæ“¾‚µ‚Ä•\¦
+	// ã‚³ãƒ³ã‚¿ã‚¯ãƒˆãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ã—ã¦è¡¨ç¤º
 	private void fillData() throws InterruptedException {
-		// ‚µ‚É‚±‚Ì‘I‘ğ•¶‚ª‚Ç‚Ì‚æ‚¤‚Éo—Í‚·‚é‚Ì‚©Debug
+		// è©¦ã—ã«ã“ã®é¸æŠæ–‡ãŒã©ã®ã‚ˆã†ã«å‡ºåŠ›ã™ã‚‹ã®ã‹Debug
 		//String d = Data.MIMETYPE + "=" + Event.CONTENT_ITEM_TYPE + " AND "+ Event.TYPE + "=" + Event.TYPE_BIRTHDAY;
         
 		Cursor c = managedQuery( Data.CONTENT_URI, 
@@ -43,8 +42,8 @@ public class ContactPickerActivity extends Activity {
 					TextView nameView = (TextView) findViewById(R.id.ContactsName);
 					TextView birthView = (TextView) findViewById(R.id.Birthday);
 
-					String displayName 	= c.getString(0); //ƒ†[ƒU–¼ 
-			        String date			= c.getString(1); //’a¶“ú
+					String displayName 	= c.getString(0); //ãƒ¦ãƒ¼ã‚¶å
+			        String date			= c.getString(1); //èª•ç”Ÿæ—¥
 			        
 			        Log.d("Testoutput",displayName);
 			        Log.d("Testoutput",date);
