@@ -3,8 +3,7 @@
 	android:orientation="horizontal" android:layout_height="match_parent"
 	android:layout_width="match_parent">
 
-	<ImageView android:id="@+id/icon" android:src="@drawable/icon"
-		android:layout_height="wrap_content" android:layout_width="wrap_content" />
+	<CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/CheckBox"></CheckBox>
 
 	<LinearLayout android:orientation="vertical"
 		android:layout_width="wrap_content" android:layout_height="wrap_content">
@@ -18,4 +17,5 @@
 			android:text="@string/birthday" />
 
 	</LinearLayout>
+
 </LinearLayout>  

@@ -13,24 +13,28 @@ import android.provider.ContactsContract.Data;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class ContactPickerActivity extends Activity {
+public class ContactPickerActivity extends Activity/* implements OnClickListener*/{
 	/** Called when the activity is first created. */
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
+	
+	CheckBox chk01; 
 
 	public class ContactsStatus {
 		private String displayName;
 		private String birthday;
+		private boolean checkflg;
 
 		public String getDisplayName() {
 			return displayName;
 		}
-
 		public void setDisplayName(String displayName) {
 			this.displayName = displayName;
 		}
@@ -38,9 +42,15 @@ public class ContactPickerActivity extends Activity {
 		public String getBirth() {
 			return birthday;
 		}
-
 		public void setBirth(String birthday) {
 			this.birthday = birthday;
+		}
+		
+		public boolean getCheckFlag(){
+			return checkflg;
+		}
+		public void setCheckFlag(boolean checkflg){
+			this.checkflg = checkflg;
 		}
 	}
 
@@ -50,16 +60,14 @@ public class ContactPickerActivity extends Activity {
 		setContentView(R.layout.main);
 
 		ListView listView = (ListView) findViewById(R.id.list);
-
 		fillData();
 
 		mAdapter = new ContactAdapter(this, R.layout.contactsname, mList);
 
 		listView.setAdapter(mAdapter);
-
 	}
 
-	public class ContactAdapter extends ArrayAdapter<ContactsStatus> {
+	public class ContactAdapter extends ArrayAdapter<ContactsStatus> implements OnClickListener{
 		private LayoutInflater inflater;
 
 		public ContactAdapter(Context context, int textViewResourceId,
@@ -69,7 +77,7 @@ public class ContactPickerActivity extends Activity {
 			this.inflater = (LayoutInflater) context
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		}
-
+		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			// ビューを受け取る
@@ -79,27 +87,36 @@ public class ContactPickerActivity extends Activity {
 			ContactsStatus item = getItem(position);
 
 			if (item != null) {
-				TextView displayName = (TextView) view
-						.findViewById(R.id.ContactsName);
+				// ビューにユーザ名をセット
+				TextView displayName = (TextView) view.findViewById(R.id.ContactsName);
 				displayName.setTypeface(Typeface.DEFAULT_BOLD);
 				displayName.setText(item.getDisplayName());
-
-				// スクリーンネームをビューにセット
+				// ビューに誕生日をセット
 				TextView birthday = (TextView) view.findViewById(R.id.Birthday);
 				birthday.setText(item.getBirth());
+				// ビューにチェックボックスのON/OFFをセット
+				CheckBox checkBox = (CheckBox) view.findViewById(R.id.CheckBox);
+	    		checkBox.setChecked(item.getCheckFlag());
+	    		
+	    		Log.d("Testoutput", "List1件表示");
+				checkBox.setOnClickListener(this);
+				
 			}
 			return view;
 		}
-	}
+		
+		public void onClick(View v) {
+			Log.d("Testoutput", "チェックボックス押したよ！");
 
+			//チェックボックス押した情報を、ContactsStatusに格納すればいいのかな？
+			//【要調査】itemを特定できる情報を引数でもってこれる？
+			//item.setCheckFlag(true);
+	    }
+	}
+    
 	// コンタクトデータを取得して表示
 	private void fillData() {
 		this.mList = new ArrayList<ContactsStatus>();
-
-		// ListViewに表示する要素を保持するアダプタを生成
-		// 【重要】これだと1つ目のテキストと2つ目のテキストが同じレイアウトになってしまう。
-		// ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this,
-		// R.layout.contactsname);
 
 		Cursor c = managedQuery(Data.CONTENT_URI, new String[] {
 				Event.DISPLAY_NAME, Event.DATA }, Data.MIMETYPE + "=? AND "
@@ -119,16 +136,13 @@ public class ContactPickerActivity extends Activity {
 
 					String displayName = c.getString(nameIndex); // ユーザ名
 					String date = c.getString(birthIndex); // 誕生日
-
-					Log.d("Testoutput", displayName);
-					Log.d("Testoutput", date);
+					
+					//Log.d("Testoutput", displayName);
+					//Log.d("Testoutput", date);
 
 					item.setDisplayName(displayName);
 					item.setBirth(date);
 					mList.add(item);
-
-					// Log.d("Testoutput",item);
-
 				}
 			} finally {
 				c.close();
