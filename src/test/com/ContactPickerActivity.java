@@ -59,6 +59,8 @@ public class ContactPickerActivity extends Activity/* implements OnClickListener
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
 
+		Log.d("Testoutput", "------------------アプリ開始------------------");
+		
 		ListView listView = (ListView) findViewById(R.id.list);
 		fillData();
 
@@ -67,7 +69,7 @@ public class ContactPickerActivity extends Activity/* implements OnClickListener
 		listView.setAdapter(mAdapter);
 	}
 
-	public class ContactAdapter extends ArrayAdapter<ContactsStatus> implements OnClickListener{
+	public class ContactAdapter extends ArrayAdapter<ContactsStatus>/* implements OnClickListener*/{
 		private LayoutInflater inflater;
 
 		public ContactAdapter(Context context, int textViewResourceId,
@@ -84,7 +86,7 @@ public class ContactPickerActivity extends Activity/* implements OnClickListener
 			View view = inflater.inflate(R.layout.contactsname, null);
 
 			// 表示すべきデータの取得
-			ContactsStatus item = getItem(position);
+			final ContactsStatus item = getItem(position);
 
 			if (item != null) {
 				// ビューにユーザ名をセット
@@ -95,23 +97,25 @@ public class ContactPickerActivity extends Activity/* implements OnClickListener
 				TextView birthday = (TextView) view.findViewById(R.id.Birthday);
 				birthday.setText(item.getBirth());
 				// ビューにチェックボックスのON/OFFをセット
-				CheckBox checkBox = (CheckBox) view.findViewById(R.id.CheckBox);
-	    		checkBox.setChecked(item.getCheckFlag());
+				final CheckBox chk01 = (CheckBox) view.findViewById(R.id.CheckBox);
+	    		chk01.setChecked(item.getCheckFlag());
 	    		
 	    		Log.d("Testoutput", "List1件表示");
-				checkBox.setOnClickListener(this);
-				
+	    		//chk01.setOnClickListener(this);
+	            
+	    		chk01.setOnClickListener(new OnClickListener() {
+	                public void onClick(View v) {
+	                	if(chk01.isChecked() == true) {
+	                		item.setCheckFlag(true);
+	                	}else{
+	                		item.setCheckFlag(false);
+		                }
+	            		Log.d("Testoutput", "viewが違う");
+	                }
+	            });
 			}
 			return view;
 		}
-		
-		public void onClick(View v) {
-			Log.d("Testoutput", "チェックボックス押したよ！");
-
-			//チェックボックス押した情報を、ContactsStatusに格納すればいいのかな？
-			//【要調査】itemを特定できる情報を引数でもってこれる？
-			//item.setCheckFlag(true);
-	    }
 	}
     
 	// コンタクトデータを取得して表示
