@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.Data;
@@ -151,8 +152,8 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 
 					ContactsStatus item = new ContactsStatus();
 
-					String displayName = c.getString(nameIndex); // ユーザ名
-					String date = c.getString(birthIndex); // 誕生日
+					String displayName = c.getString(nameIndex);
+					String date = c.getString(birthIndex);
 
 					item.setDisplayName(displayName);
 					item.setBirth(date);
@@ -167,17 +168,15 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 	@Override
 	public void onClick(View v) {
 		if (v == check_full) {
-			/* 全てのチェックボックスに対し、チェックON/OFFを切り替えたい */
 			Log.d("Testoutput", "チェックOn/OFFが押された！");
 
-			// ボタンおした時の表示名を変える
+			// 全チェックボックのON/OFF切替＋ボタンおした時の表示名を変更
 			if (check_full.isChecked() == true) {
 				for (ContactsStatus status : mList) {
 					status.setCheckFlag(true);
 				}
 				CheckBox b = (CheckBox) v;
 				b.setText("チェック解除");
-
 			} else if (check_full.isChecked() == false) {
 				for (ContactsStatus status : mList) {
 					status.setCheckFlag(false);
@@ -191,15 +190,63 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 			/* チェックされたものを取り込む処理を実施 */
 			Log.d("Testoutput", "取り込みが押された！");
 
-			for (ContactsStatus status : mList) {
-				if (status.getCheckFlag() == true) {
-					Log.d("Testoutput",
-							status.getDisplayName() + status.getBirth());
-				}
-			}
+			try {
+				/* 該当カレンダーがあるか捜索＋カレンダー作成 */
+				String calId = SearchCalendar();
+				Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
+				/* リストから情報取得 */
+				for (ContactsStatus status : mList) {
+					if (status.getCheckFlag() == true) {
+						Log.d("Testoutput",
+								status.getBirth() + "\t"
+										+ status.getDisplayName());
+					}
+				}
+
+			} catch (InterruptedException e) {
+				// TODO 自動生成された catch ブロック
+				e.printStackTrace();
+			}
 		} else {
 			Log.d("Testoutput", "何か押された！");
 		}
+	}
+
+	private String SearchCalendar() throws InterruptedException {
+		String calName, calId = null;
+
+		/* GoogleCalendarのリスト取得 */
+		String[] projection = new String[] { "_id", "name" };
+		Uri calendars = Uri.parse("content://com.android.calendar/calendars");
+
+		Cursor c2 = managedQuery(calendars, projection, "selected", null, null);
+
+		Log.d("Testoutput", "---------------カレンダー捜索開始---------------");
+
+		if (c2 != null) {
+			try {
+				while (c2.moveToNext()) {
+					calName = c2.getString(c2.getColumnIndex("name"));
+					calId = c2.getString(c2.getColumnIndex("_id"));
+
+					Log.d("Testoutput", calId + " : " + calName);
+
+					/* 【重要】ここは以降拡張予定　今回は固定で「アプリテスト用」とする */
+					if (calName.equals("アプリテスト用")) {
+						Log.d("Testoutput", calName + "は存在した！");
+						break;
+					} else {
+						calId = "0";
+					}
+				}
+			} finally {
+				c2.close();
+				Log.d("Testoutput", "---------------カレンダー捜索完了---------------");
+			}
+		} else {
+			Log.d("Testoutput", "NULL");
+		}
+		return calId;
 	}
 }
