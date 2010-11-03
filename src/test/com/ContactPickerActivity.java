@@ -21,15 +21,15 @@ import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class ContactPickerActivity extends Activity implements OnClickListener{
+public class ContactPickerActivity extends Activity implements OnClickListener {
 	/** Called when the activity is first created. */
-	public List<ContactsStatus> mList = null;
+	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
-	
+
 	CheckBox chk01;
 	private CheckBox check_full;
 	private Button button_import;
-	
+
 	public class ContactsStatus {
 		private String displayName;
 		private String birthday;
@@ -38,6 +38,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 		public String getDisplayName() {
 			return displayName;
 		}
+
 		public void setDisplayName(String displayName) {
 			this.displayName = displayName;
 		}
@@ -45,14 +46,16 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 		public String getBirth() {
 			return birthday;
 		}
+
 		public void setBirth(String birthday) {
 			this.birthday = birthday;
 		}
-		
-		public boolean getCheckFlag(){
+
+		public boolean getCheckFlag() {
 			return checkflg;
 		}
-		public void setCheckFlag(boolean checkflg){
+
+		public void setCheckFlag(boolean checkflg) {
 			this.checkflg = checkflg;
 		}
 	}
@@ -63,7 +66,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 		setContentView(R.layout.main);
 
 		Log.d("Testoutput", "------------------アプリ開始------------------");
-		
+
 		/* 連絡帳から名前と誕生日を取得して格納 */
 		ListView listView = (ListView) findViewById(R.id.list);
 		fillData();
@@ -80,7 +83,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 		button_import.setOnClickListener(this);
 	}
 
-	public class ContactAdapter extends ArrayAdapter<ContactsStatus>/* implements OnClickListener*/{
+	public class ContactAdapter extends ArrayAdapter<ContactsStatus> {
 		private LayoutInflater inflater;
 
 		public ContactAdapter(Context context, int textViewResourceId,
@@ -90,7 +93,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 			this.inflater = (LayoutInflater) context
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		}
-		
+
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			// ビューを受け取る
@@ -101,32 +104,34 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 
 			if (item != null) {
 				// ビューにユーザ名をセット
-				TextView displayName = (TextView) view.findViewById(R.id.ContactsName);
+				TextView displayName = (TextView) view
+						.findViewById(R.id.ContactsName);
 				displayName.setTypeface(Typeface.DEFAULT_BOLD);
 				displayName.setText(item.getDisplayName());
 				// ビューに誕生日をセット
 				TextView birthday = (TextView) view.findViewById(R.id.Birthday);
 				birthday.setText(item.getBirth());
 				// ビューにチェックボックスのON/OFFをセット
-				final CheckBox chk01 = (CheckBox) view.findViewById(R.id.CheckBox);
-	    		chk01.setChecked(item.getCheckFlag());
-	    		
-	    		chk01.setOnClickListener(new OnClickListener() {
-	                public void onClick(View v) {
-	                	if(chk01.isChecked() == true) {
-	                		item.setCheckFlag(true);
-		            		Log.d("Testoutput", "1つチェックした");
-	                	}else{
-	                		item.setCheckFlag(false);
-		            		Log.d("Testoutput", "1つチェック外した");
-		                }
-	                }
-	            });
+				final CheckBox chk01 = (CheckBox) view
+						.findViewById(R.id.CheckBox);
+				chk01.setChecked(item.getCheckFlag());
+
+				chk01.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						if (chk01.isChecked() == true) {
+							item.setCheckFlag(true);
+							Log.d("Testoutput", "1つチェックした");
+						} else {
+							item.setCheckFlag(false);
+							Log.d("Testoutput", "1つチェック外した");
+						}
+					}
+				});
 			}
 			return view;
 		}
 	}
-    
+
 	// コンタクトデータを取得して表示
 	private void fillData() {
 		this.mList = new ArrayList<ContactsStatus>();
@@ -149,7 +154,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 
 					String displayName = c.getString(nameIndex); // ユーザ名
 					String date = c.getString(birthIndex); // 誕生日
-					
+
 					item.setDisplayName(displayName);
 					item.setBirth(date);
 					mList.add(item);
@@ -162,42 +167,39 @@ public class ContactPickerActivity extends Activity implements OnClickListener{
 
 	@Override
 	public void onClick(View v) {
-		if(v == check_full){
-			/* 全てのチェックボックスに対し、チェックON/OFFを切り替えたい  */
+		if (v == check_full) {
+			/* 全てのチェックボックスに対し、チェックON/OFFを切り替えたい */
 			Log.d("Testoutput", "チェックOn/OFFが押された！");
 
-			//リストから、チェックボックスの情報を取得したい
-
-			
-			
 			// ボタンおした時の表示名を変える
-			if(check_full.isChecked() == true){
-				CheckBox b = (CheckBox)v;
+			if (check_full.isChecked() == true) {
+				for (ContactsStatus status : mList) {
+					status.setCheckFlag(true);
+				}
+				CheckBox b = (CheckBox) v;
 				b.setText("チェック解除");
-			}else if(check_full.isChecked() == false){
-				CheckBox b = (CheckBox)v;
+
+			} else if (check_full.isChecked() == false) {
+				for (ContactsStatus status : mList) {
+					status.setCheckFlag(false);
+				}
+				CheckBox b = (CheckBox) v;
 				b.setText("全てチェック");
 			}
+			mAdapter.notifyDataSetChanged();
 
-		}else if(v == button_import){
-			/* チェックされたものを取り込む処理を実施  */
+		} else if (v == button_import) {
+			/* チェックされたものを取り込む処理を実施 */
 			Log.d("Testoutput", "取り込みが押された！");
 
-			//リストから、チェックボックスの情報を取得したい
-			
-			/* これ的な処理がしたい
-			 * 	final ContactsStatus item = getItem(0);
-			 * 
-			 *  Log.d("Testoutput",Boolean.toString(item.getCheckFlag()));
-			 *  if(item.getDisplayName() != null){
-			 *	 Log.d("Testoutput",item.getDisplayName());			
-			 *  }else{
-			 *	 Log.d("Testoutput","nullってた");
-			 *  }
-			 */
-			
-		}else{
-			Log.d("Testoutput", "何か押された！");			
+			for (ContactsStatus status : mList) {
+				if (status.getCheckFlag() == true) {
+					Log.d("Testoutput", status.getDisplayName() + status.getBirth());
+				}
+			}
+
+		} else {
+			Log.d("Testoutput", "何か押された！");
 		}
 	}
 }
