@@ -23,7 +23,7 @@ import android.widget.TextView;
 
 public class ContactPickerActivity extends Activity implements OnClickListener{
 	/** Called when the activity is first created. */
-	private List<ContactsStatus> mList = null;
+	public List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
 	
 	CheckBox chk01;
