@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentResolver;
@@ -76,6 +75,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
 
+		Log.d("Testoutput", "------------------アプリ終了------------------");
 		Log.d("Testoutput", "------------------アプリ開始------------------");
 
 		/* 連絡帳から名前と誕生日を取得して格納 */
@@ -208,33 +208,44 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 				String calId = SearchCalendar();
 				Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
-				/* リストから情報取得 */
-				for (ContactsStatus status : mList) {
-					if (status.getCheckFlag() == true) {
-						Log.d("Testoutput",
-								status.getBirth() + "\t"
-										+ status.getDisplayName());
+				if (Integer.parseInt(calId) != 0) {
+					/* リストから情報取得 */
+					for (ContactsStatus status : mList) {
+						if (status.getCheckFlag() == true) {
+							Log.d("Testoutput", status.getBirth() + "\t"
+									+ status.getDisplayName());
 
-						create_event(status.getBirth(),
-								status.getDisplayName(),
-								Integer.parseInt(calId));
+							CreateEvent(status.getBirth(),
+									status.getDisplayName(),
+									Integer.parseInt(calId));
 
-						Completion_count++;
+							Completion_count++;
+						}
 					}
-				}
-
-				if (Completion_count == 0) {
-					Log.d("Testoutput", "チェックボックスに何もチェックされていない");
+					if (Completion_count == 0) {
+						AlertDialog.Builder dlg;
+						dlg = new AlertDialog.Builder(
+								ContactPickerActivity.this);
+						dlg.setTitle("error!!");
+						dlg.setMessage("何もチェックされていません");
+						dlg.show();
+					} else {
+						AlertDialog.Builder dlg;
+						dlg = new AlertDialog.Builder(
+								ContactPickerActivity.this);
+						dlg.setTitle("complete!!");
+						dlg.setMessage("カレンダーへ登録完了！");
+						dlg.show();
+					}
 				} else {
 					AlertDialog.Builder dlg;
 					dlg = new AlertDialog.Builder(ContactPickerActivity.this);
-					dlg.setTitle("complete!!");
-					dlg.setMessage("カレンダーへ登録完了！");
+					dlg.setTitle("error!!");
+					dlg.setMessage("カレンダーが登録されてません");
 					dlg.show();
 				}
 
 			} catch (InterruptedException e) {
-				// TODO 自動生成された catch ブロック
 				e.printStackTrace();
 			}
 		} else {
@@ -242,27 +253,48 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		}
 	}
 
-	private void create_event(String birthday, String ContactName, int calId) {
+	private void CreateEvent(String birthday, String ContactName, int calId) {
 		long startLongDay;
 		long endLongDay;
+		int eventcheck = 0;
 
 		Uri events = Uri.parse("content://com.android.calendar/events");
 		ContentValues values = new ContentValues();
 		ContentResolver cr = this.getContentResolver();
 
-		// Log.d("Testoutput", "---------------イベント登録開始---------------");
-		values.put("calendar_id", calId);
-		values.put("title", ContactName + " 誕生日");
-
 		startLongDay = this.getLongDay(birthday, 0);
 		endLongDay = this.getLongDay(birthday, 1);
 
-		values.put("allDay", 1);
-		values.put("dtstart", startLongDay);
-		values.put("dtend", endLongDay);
+		/* 日本とアメリカで誤差15時間あるっぽいので */
+		long day_check = startLongDay - 54000000;
 
-		cr.insert(events, values);
-		// Log.d("Testoutput", "---------------イベント登録終了---------------");
+		/* すでに登録されているときは登録しない */
+		String[] projection = new String[] { "title", "dtstart" };
+		Cursor c3 = managedQuery(events, projection, "calendar_id =" + calId
+				+ " AND dtstart =" + day_check, null, null);
+
+		while (c3.moveToNext()) {
+			String titl = c3.getString(c3.getColumnIndex("title"));
+			String dtst = c3.getString(c3.getColumnIndex("dtstart"));
+
+			if (dtst.equals(Long.toString(day_check))
+					&& titl.equals(ContactName + " 誕生日")) {
+				Log.d("Testoutput", "すでに登録済み");
+				eventcheck = 1;
+			}
+		}
+
+		if (eventcheck == 0) {
+			Log.d("Testoutput", "---------------イベント登録開始---------------");
+			values.put("calendar_id", calId);
+			values.put("title", ContactName + " 誕生日");
+			values.put("allDay", 1);
+			values.put("dtstart", startLongDay);
+			values.put("dtend", endLongDay);
+
+			cr.insert(events, values);
+			Log.d("Testoutput", "---------------イベント登録終了---------------");
+		}
 	}
 
 	private long getLongDay(String str, int st_end) {
@@ -276,7 +308,6 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		final int month = calendar.get(Calendar.MONTH);
 		final int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-		/* 取得した誕生日を一旦 yyyy-mm-dd の形に変換する */
 		try {
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 			Date date = format.parse(str);
@@ -285,7 +316,6 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 			mm = Integer.parseInt(birth.substring(5, 7));
 			dd = Integer.parseInt(birth.substring(8, 10));
 		} catch (ParseException e) {
-			// TODO 自動生成された catch ブロック
 			e.printStackTrace();
 		}
 
@@ -302,19 +332,20 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 			yyyy = year + 1;
 		}
 
-		/* 誕生日の次の日用に＋1 */
-		if (st_end == 1) {
+		/* なぜか1日前に登録されるので下のような対処とする */
+		if (st_end == 0) {
 			dd = dd + 1;
+		} else if (st_end == 1) {
+			dd = dd + 2;
 		}
 
 		birth = Integer.toString(yyyy) + "-" + Integer.toString(mm) + "-"
-				+ Integer.toString(dd);
+				+ Integer.toString(dd) + " 00:00:00";
 
 		try {
-			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat format = new SimpleDateFormat(
+					"yyyy-MM-dd HH:mm:ss");
 			Date date = format.parse(birth);
-
-			// Log.d("Testoutput", format.format(date));
 
 			Time times = new Time();
 			times.timezone = TimeZone.getDefault().getDisplayName(
@@ -350,7 +381,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 
 					/* 【重要】ここは以降拡張予定　今回は固定で「アプリテスト用」とする */
 					if (calName.equals("アプリテスト用")) {
-						Log.d("Testoutput", calName + "は存在した！");
+						//Log.d("Testoutput", calName + "は存在した！");
 						break;
 					} else {
 						calId = "0";
