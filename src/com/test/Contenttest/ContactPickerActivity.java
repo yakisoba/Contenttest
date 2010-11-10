@@ -13,6 +13,7 @@ import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -22,6 +23,8 @@ import android.provider.ContactsContract.Data;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -70,13 +73,51 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		}
 	}
 
+	public class CalendarList {
+		private String[] calendar;
+		private String[] calId;
+		private int count;
+
+		private CalendarList() {
+			final String[] projection = new String[] { "_id", "name" };
+			final Uri calendars = Uri
+					.parse("content://com.android.calendar/calendars");
+
+			final Cursor clist = managedQuery(calendars, projection, "selected",
+					null, null);
+
+			if (clist != null) {
+				try {
+					while (clist.moveToNext()) {
+						calendar[count] = clist.getString(clist
+								.getColumnIndex("name"));
+						calId[count] = clist.getString(clist
+								.getColumnIndex("_id"));
+					}
+				} finally {
+					clist.close();
+				}
+			}
+			Log.d("Testoutput", "カレンダーリスト作成完了");
+		}
+
+		public String getCalendarList(int count) {
+			return calendar[count];
+		}
+
+		public String[] getCalendarList() {
+			return calendar;
+		}
+
+		public String[] getCalendarNum() {
+			return calId;
+		}
+	}
+
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
-
-		Log.d("Testoutput", "------------------アプリ終了------------------");
-		Log.d("Testoutput", "------------------アプリ開始------------------");
 
 		/* 連絡帳から名前と誕生日を取得して格納 */
 		ListView listView = (ListView) findViewById(R.id.list);
@@ -92,6 +133,55 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		/* 「取り込み」ボタンが押された時の処理 */
 		button_import = (Button) findViewById(R.id.button_import);
 		button_import.setOnClickListener(this);
+
+	}
+
+	/* メニューを表示 */
+	public boolean onCreateOptionsMenu(Menu menu) {
+		boolean ret = super.onCreateOptionsMenu(menu);
+		menu.add(0, Menu.FIRST, Menu.NONE, "カレンダー選択");
+		return ret;
+	}
+
+	// オプションメニューアイテムが選択された時に呼び出されます
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		boolean ret = true;
+
+		if (item.getItemId() == 1) {
+			CalendarList callist = new CalendarList();
+			String result_item = callist.getCalendarList(0);
+			Log.d("Testoutput",result_item);
+
+			new AlertDialog.Builder(this)
+					.setTitle("カレンダー選択")
+					.setSingleChoiceItems(callist.getCalendarList(), 0,
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int which) {
+								}
+							})
+					.setPositiveButton("OK",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int whichButton) {
+									/* OKボタンをクリックした時の処理 */
+									new AlertDialog.Builder(
+											ContactPickerActivity.this);
+								}
+							})
+					.setNegativeButton("Cancel",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int whichButton) {
+									/* Cancel ボタンをクリックした時の処理 */
+									new AlertDialog.Builder(
+											ContactPickerActivity.this);
+								}
+							}).show();
+
+		}
+		return ret;
 	}
 
 	public class ContactAdapter extends ArrayAdapter<ContactsStatus> {
@@ -209,6 +299,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 				Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
 				if (Integer.parseInt(calId) != 0) {
+
 					/* リストから情報取得 */
 					for (ContactsStatus status : mList) {
 						if (status.getCheckFlag() == true) {
@@ -381,7 +472,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 
 					/* 【重要】ここは以降拡張予定　今回は固定で「アプリテスト用」とする */
 					if (calName.equals("アプリテスト用")) {
-						//Log.d("Testoutput", calName + "は存在した！");
+						// Log.d("Testoutput", calName + "は存在した！");
 						break;
 					} else {
 						calId = "0";
