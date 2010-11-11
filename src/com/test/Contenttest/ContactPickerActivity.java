@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentResolver;
@@ -33,11 +34,14 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class ContactPickerActivity extends Activity implements OnClickListener {
 	/** Called when the activity is first created. */
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
+	String[] Calendar_ID;
+	String result;
 
 	CheckBox chk01;
 	private CheckBox check_full;
@@ -76,41 +80,26 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 	public class CalendarList {
 		private String[] calendar;
 		private String[] calId;
-		private int count;
 
-		private CalendarList() {
-			final String[] projection = new String[] { "_id", "name" };
-			final Uri calendars = Uri
-					.parse("content://com.android.calendar/calendars");
-
-			final Cursor clist = managedQuery(calendars, projection, "selected",
-					null, null);
-
-			if (clist != null) {
-				try {
-					while (clist.moveToNext()) {
-						calendar[count] = clist.getString(clist
-								.getColumnIndex("name"));
-						calId[count] = clist.getString(clist
-								.getColumnIndex("_id"));
-					}
-				} finally {
-					clist.close();
-				}
-			}
-			Log.d("Testoutput", "カレンダーリスト作成完了");
+		public void setCalendarList(int num) {
+			this.calendar = new String[num];
+			this.calId = new String[num];
 		}
 
-		public String getCalendarList(int count) {
-			return calendar[count];
-		}
-
-		public String[] getCalendarList() {
+		public String[] getCalendarName() {
 			return calendar;
 		}
 
-		public String[] getCalendarNum() {
+		public void setCalendarName(String calendar, int num) {
+			this.calendar[num] = calendar;
+		}
+
+		public String[] getCalendarId() {
 			return calId;
+		}
+
+		public void setCalendarId(String calId, int num) {
+			this.calId[num] = calId;
 		}
 	}
 
@@ -148,17 +137,61 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		boolean ret = true;
 
-		if (item.getItemId() == 1) {
-			CalendarList callist = new CalendarList();
-			String result_item = callist.getCalendarList(0);
-			Log.d("Testoutput",result_item);
+		switch (item.getItemId()) {
+		case 1:
+
+			String[] Calendar_list = null;
+			Calendar_ID = null;
+
+			final String[] projection = new String[] { "_id", "displayName" };
+			final Uri calendars = Uri
+					.parse("content://com.android.calendar/calendars");
+
+			final Cursor clist = managedQuery(calendars, projection,
+					"access_level = 700", null, null);
+
+			CalendarList item1 = new CalendarList();
+			item1.setCalendarList(clist.getCount());
+
+			if (clist != null) {
+				try {
+					int count = 0;
+
+					while (clist.moveToNext()) {
+
+						String calendar = clist.getString(clist
+								.getColumnIndex("displayName"));
+						String calendarId = clist.getString(clist
+								.getColumnIndex("_id"));
+
+						item1.setCalendarName(calendar, count);
+						item1.setCalendarId(calendarId, count);
+
+						Log.d("Testoutput", calendarId + " : " + calendar);
+
+						count++;
+					}
+				} finally {
+					clist.close();
+				}
+			}
+			Log.d("Testoutput", "カレンダーリスト作成完了");
+
+			Calendar_list = item1.getCalendarName();
+			Calendar_ID = item1.getCalendarId();
 
 			new AlertDialog.Builder(this)
 					.setTitle("カレンダー選択")
-					.setSingleChoiceItems(callist.getCalendarList(), 0,
+					.setSingleChoiceItems(Calendar_list, -1,
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int which) {
+									Toast.makeText(
+											ContactPickerActivity.this,
+											Integer.toString(which)
+													+ "を選択しました。",
+											Toast.LENGTH_SHORT).show();
+									result = Calendar_ID[which];
 								}
 							})
 					.setPositiveButton("OK",
@@ -166,8 +199,9 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 								public void onClick(DialogInterface dialog,
 										int whichButton) {
 									/* OKボタンをクリックした時の処理 */
-									new AlertDialog.Builder(
-											ContactPickerActivity.this);
+									// new AlertDialog.Builder(
+									// ContactPickerActivity.this);
+									Log.d("Testoutput", result + "番が選択された");
 								}
 							})
 					.setNegativeButton("Cancel",
@@ -179,7 +213,6 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 											ContactPickerActivity.this);
 								}
 							}).show();
-
 		}
 		return ret;
 	}
@@ -291,53 +324,46 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 			/* チェックされたものを取り込む処理を実施 */
 			Log.d("Testoutput", "取り込みが押された！");
 
-			try {
-				int Completion_count = 0;
+			int Completion_count = 0;
 
-				/* 該当カレンダーがあるか捜索＋カレンダー作成 */
-				String calId = SearchCalendar();
-				Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
+			/* 該当カレンダーがあるか捜索＋カレンダー作成 */
+			String calId = result;
+			Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
-				if (Integer.parseInt(calId) != 0) {
+			if (Integer.parseInt(calId) != 0) {
 
-					/* リストから情報取得 */
-					for (ContactsStatus status : mList) {
-						if (status.getCheckFlag() == true) {
-							Log.d("Testoutput", status.getBirth() + "\t"
-									+ status.getDisplayName());
+				/* リストから情報取得 */
+				for (ContactsStatus status : mList) {
+					if (status.getCheckFlag() == true) {
+						Log.d("Testoutput",
+								status.getBirth() + "\t"
+										+ status.getDisplayName());
 
-							CreateEvent(status.getBirth(),
-									status.getDisplayName(),
-									Integer.parseInt(calId));
+						CreateEvent(status.getBirth(), status.getDisplayName(),
+								Integer.parseInt(calId));
 
-							Completion_count++;
-						}
+						Completion_count++;
 					}
-					if (Completion_count == 0) {
-						AlertDialog.Builder dlg;
-						dlg = new AlertDialog.Builder(
-								ContactPickerActivity.this);
-						dlg.setTitle("error!!");
-						dlg.setMessage("何もチェックされていません");
-						dlg.show();
-					} else {
-						AlertDialog.Builder dlg;
-						dlg = new AlertDialog.Builder(
-								ContactPickerActivity.this);
-						dlg.setTitle("complete!!");
-						dlg.setMessage("カレンダーへ登録完了！");
-						dlg.show();
-					}
-				} else {
+				}
+				if (Completion_count == 0) {
 					AlertDialog.Builder dlg;
 					dlg = new AlertDialog.Builder(ContactPickerActivity.this);
 					dlg.setTitle("error!!");
-					dlg.setMessage("カレンダーが登録されてません");
+					dlg.setMessage("何もチェックされていません");
+					dlg.show();
+				} else {
+					AlertDialog.Builder dlg;
+					dlg = new AlertDialog.Builder(ContactPickerActivity.this);
+					dlg.setTitle("complete!!");
+					dlg.setMessage("カレンダーへ登録完了！");
 					dlg.show();
 				}
-
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} else {
+				AlertDialog.Builder dlg;
+				dlg = new AlertDialog.Builder(ContactPickerActivity.this);
+				dlg.setTitle("error!!");
+				dlg.setMessage("カレンダーが登録されてません");
+				dlg.show();
 			}
 		} else {
 			Log.d("Testoutput", "何か押された！");
@@ -449,42 +475,5 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		}
 
 		return time;
-	}
-
-	private String SearchCalendar() throws InterruptedException {
-		String calName, calId = null;
-
-		/* GoogleCalendarのリスト取得 */
-		String[] projection = new String[] { "_id", "name" };
-		Uri calendars = Uri.parse("content://com.android.calendar/calendars");
-
-		Cursor c2 = managedQuery(calendars, projection, "selected", null, null);
-
-		Log.d("Testoutput", "---------------カレンダー捜索開始---------------");
-
-		if (c2 != null) {
-			try {
-				while (c2.moveToNext()) {
-					calName = c2.getString(c2.getColumnIndex("name"));
-					calId = c2.getString(c2.getColumnIndex("_id"));
-
-					Log.d("Testoutput", calId + " : " + calName);
-
-					/* 【重要】ここは以降拡張予定　今回は固定で「アプリテスト用」とする */
-					if (calName.equals("アプリテスト用")) {
-						// Log.d("Testoutput", calName + "は存在した！");
-						break;
-					} else {
-						calId = "0";
-					}
-				}
-			} finally {
-				c2.close();
-				Log.d("Testoutput", "---------------カレンダー捜索完了---------------");
-			}
-		} else {
-			Log.d("Testoutput", "NULL");
-		}
-		return calId;
 	}
 }
