@@ -5,7 +5,7 @@
  * should not be modified by hand.
  */
 
-package com.test.Contenttest;
+package com.blogspot.yakisobayuki.birth2cal;
 
 public final class R {
     public static final class attr {
@@ -23,7 +23,7 @@ public final class R {
         public static final int list=0x7f050006;
     }
     public static final class layout {
-        public static final int contactsname=0x7f030000;
+        public static final int listview=0x7f030000;
         public static final int main=0x7f030001;
     }
     public static final class string {

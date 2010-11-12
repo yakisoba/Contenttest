@@ -1,4 +1,4 @@
-package com.test.Contenttest;
+package com.blogspot.yakisobayuki.birth2cal;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import com.blogspot.yakisobayuki.birth2cal.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -34,14 +36,16 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-public class ContactPickerActivity extends Activity implements OnClickListener {
+public class Birth2Cal extends Activity implements OnClickListener {
 	/** Called when the activity is first created. */
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
+
+	String[] Calendar_list;
 	String[] Calendar_ID;
 	String result;
+	String result_tmp;
 
 	CheckBox chk01;
 	private CheckBox check_full;
@@ -112,7 +116,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		ListView listView = (ListView) findViewById(R.id.list);
 		fillData();
 
-		mAdapter = new ContactAdapter(this, R.layout.contactsname, mList);
+		mAdapter = new ContactAdapter(this, R.layout.listview, mList);
 		listView.setAdapter(mAdapter);
 
 		/* 「全てチェック」ボタンが押された時の処理 */
@@ -140,81 +144,74 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		switch (item.getItemId()) {
 		case 1:
 
-			String[] Calendar_list = null;
-			Calendar_ID = null;
-
-			final String[] projection = new String[] { "_id", "displayName" };
-			final Uri calendars = Uri
-					.parse("content://com.android.calendar/calendars");
-
-			final Cursor clist = managedQuery(calendars, projection,
-					"access_level = 700", null, null);
-
-			CalendarList item1 = new CalendarList();
-			item1.setCalendarList(clist.getCount());
-
-			if (clist != null) {
-				try {
-					int count = 0;
-
-					while (clist.moveToNext()) {
-
-						String calendar = clist.getString(clist
-								.getColumnIndex("displayName"));
-						String calendarId = clist.getString(clist
-								.getColumnIndex("_id"));
-
-						item1.setCalendarName(calendar, count);
-						item1.setCalendarId(calendarId, count);
-
-						Log.d("Testoutput", calendarId + " : " + calendar);
-
-						count++;
-					}
-				} finally {
-					clist.close();
-				}
-			}
-			Log.d("Testoutput", "カレンダーリスト作成完了");
-
-			Calendar_list = item1.getCalendarName();
-			Calendar_ID = item1.getCalendarId();
-
+			CalendarList();
+			
 			new AlertDialog.Builder(this)
 					.setTitle("カレンダー選択")
 					.setSingleChoiceItems(Calendar_list, -1,
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int which) {
-									Toast.makeText(
-											ContactPickerActivity.this,
-											Integer.toString(which)
-													+ "を選択しました。",
-											Toast.LENGTH_SHORT).show();
-									result = Calendar_ID[which];
+									result_tmp = Calendar_ID[which];
 								}
 							})
 					.setPositiveButton("OK",
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int whichButton) {
-									/* OKボタンをクリックした時の処理 */
-									// new AlertDialog.Builder(
-									// ContactPickerActivity.this);
-									Log.d("Testoutput", result + "番が選択された");
+									new AlertDialog.Builder(Birth2Cal.this);
+									result = result_tmp;
 								}
 							})
 					.setNegativeButton("Cancel",
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int whichButton) {
-									/* Cancel ボタンをクリックした時の処理 */
-									new AlertDialog.Builder(
-											ContactPickerActivity.this);
+									new AlertDialog.Builder(Birth2Cal.this);
 								}
 							}).show();
 		}
 		return ret;
+	}
+	
+	public void CalendarList(){
+		Calendar_list = null;
+		Calendar_ID = null;
+
+		final String[] projection = new String[] { "_id", "displayName" };
+		final Uri calendars = Uri
+				.parse("content://com.android.calendar/calendars");
+
+		final Cursor clist = managedQuery(calendars, projection,
+				"access_level = 700", null, null);
+
+		CalendarList item1 = new CalendarList();
+		item1.setCalendarList(clist.getCount());
+
+		if (clist != null) {
+			try {
+				int count = 0;
+
+				while (clist.moveToNext()) {
+
+					String calendar = clist.getString(clist
+							.getColumnIndex("displayName"));
+					String calendarId = clist.getString(clist
+							.getColumnIndex("_id"));
+
+					item1.setCalendarName(calendar, count);
+					item1.setCalendarId(calendarId, count);
+
+					Log.d("Testoutput", calendarId + " : " + calendar);
+
+					count++;
+				}
+			} finally {
+				clist.close();
+			}
+		}
+		Calendar_list = item1.getCalendarName();
+		Calendar_ID = item1.getCalendarId();
 	}
 
 	public class ContactAdapter extends ArrayAdapter<ContactsStatus> {
@@ -231,7 +228,7 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			// ビューを受け取る
-			View view = inflater.inflate(R.layout.contactsname, null);
+			View view = inflater.inflate(R.layout.listview, null);
 
 			// 表示すべきデータの取得
 			final ContactsStatus item = getItem(position);
@@ -254,10 +251,8 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 					public void onClick(View v) {
 						if (chk01.isChecked() == true) {
 							item.setCheckFlag(true);
-							Log.d("Testoutput", "1つチェックした");
 						} else {
 							item.setCheckFlag(false);
-							Log.d("Testoutput", "1つチェック外した");
 						}
 					}
 				});
@@ -270,31 +265,31 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 	private void fillData() {
 		this.mList = new ArrayList<ContactsStatus>();
 
-		Cursor c = managedQuery(Data.CONTENT_URI, new String[] {
+		Cursor ccont = managedQuery(Data.CONTENT_URI, new String[] {
 				Event.DISPLAY_NAME, Event.DATA }, Data.MIMETYPE + "=? AND "
 				+ Event.TYPE + "=?", new String[] { Event.CONTENT_ITEM_TYPE,
 				String.valueOf(Event.TYPE_BIRTHDAY) }, Data.DISPLAY_NAME);
 
 		// 名前と誕生日のindexを取得して、出力の際に参照する
-		int nameIndex = c.getColumnIndex(Event.DISPLAY_NAME);
-		int birthIndex = c.getColumnIndex(Event.DATA);
+		int nameIndex = ccont.getColumnIndex(Event.DISPLAY_NAME);
+		int birthIndex = ccont.getColumnIndex(Event.DATA);
 
-		if (c != null) {
+		if (ccont != null) {
 			try {
 
-				while (c.moveToNext()) {
+				while (ccont.moveToNext()) {
 
 					ContactsStatus item = new ContactsStatus();
 
-					String displayName = c.getString(nameIndex);
-					String date = c.getString(birthIndex);
+					String displayName = ccont.getString(nameIndex);
+					String date = ccont.getString(birthIndex);
 
 					item.setDisplayName(displayName);
 					item.setBirth(date);
 					mList.add(item);
 				}
 			} finally {
-				c.close();
+				ccont.close();
 			}
 		}
 	}
@@ -302,9 +297,6 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 	@Override
 	public void onClick(View v) {
 		if (v == check_full) {
-			Log.d("Testoutput", "チェックOn/OFFが押された！");
-
-			// 全チェックボックのON/OFF切替＋ボタンおした時の表示名を変更
 			if (check_full.isChecked() == true) {
 				for (ContactsStatus status : mList) {
 					status.setCheckFlag(true);
@@ -321,23 +313,15 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 			mAdapter.notifyDataSetChanged();
 
 		} else if (v == button_import) {
-			/* チェックされたものを取り込む処理を実施 */
-			Log.d("Testoutput", "取り込みが押された！");
-
 			int Completion_count = 0;
 
-			/* 該当カレンダーがあるか捜索＋カレンダー作成 */
 			String calId = result;
 			Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
 			if (Integer.parseInt(calId) != 0) {
 
-				/* リストから情報取得 */
 				for (ContactsStatus status : mList) {
 					if (status.getCheckFlag() == true) {
-						Log.d("Testoutput",
-								status.getBirth() + "\t"
-										+ status.getDisplayName());
 
 						CreateEvent(status.getBirth(), status.getDisplayName(),
 								Integer.parseInt(calId));
@@ -347,20 +331,20 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 				}
 				if (Completion_count == 0) {
 					AlertDialog.Builder dlg;
-					dlg = new AlertDialog.Builder(ContactPickerActivity.this);
+					dlg = new AlertDialog.Builder(Birth2Cal.this);
 					dlg.setTitle("error!!");
 					dlg.setMessage("何もチェックされていません");
 					dlg.show();
 				} else {
 					AlertDialog.Builder dlg;
-					dlg = new AlertDialog.Builder(ContactPickerActivity.this);
+					dlg = new AlertDialog.Builder(Birth2Cal.this);
 					dlg.setTitle("complete!!");
 					dlg.setMessage("カレンダーへ登録完了！");
 					dlg.show();
 				}
 			} else {
 				AlertDialog.Builder dlg;
-				dlg = new AlertDialog.Builder(ContactPickerActivity.this);
+				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("error!!");
 				dlg.setMessage("カレンダーが登録されてません");
 				dlg.show();
@@ -387,12 +371,12 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 
 		/* すでに登録されているときは登録しない */
 		String[] projection = new String[] { "title", "dtstart" };
-		Cursor c3 = managedQuery(events, projection, "calendar_id =" + calId
-				+ " AND dtstart =" + day_check, null, null);
+		Cursor cevent = managedQuery(events, projection, "calendar_id ="
+				+ calId + " AND dtstart =" + day_check, null, null);
 
-		while (c3.moveToNext()) {
-			String titl = c3.getString(c3.getColumnIndex("title"));
-			String dtst = c3.getString(c3.getColumnIndex("dtstart"));
+		while (cevent.moveToNext()) {
+			String titl = cevent.getString(cevent.getColumnIndex("title"));
+			String dtst = cevent.getString(cevent.getColumnIndex("dtstart"));
 
 			if (dtst.equals(Long.toString(day_check))
 					&& titl.equals(ContactName + " 誕生日")) {
@@ -437,15 +421,9 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 		}
 
 		/* 今年の誕生日が過ぎたかどうか判定 */
-		if (month + 1 < mm) { // 過ぎてない
+		if ((month + 1 < mm) || ((month + 1 == mm) && (day <= dd))) { // 過ぎてない
 			yyyy = year;
-		} else if (month + 1 == mm) { // 日付も見ないとわからない
-			if (day <= dd) { // 過ぎてない
-				yyyy = year;
-			} else { // 過ぎてる
-				yyyy = year + 1;
-			}
-		} else if (month + 1 > mm) { // 過ぎてる
+		} else if ((month + 1 > mm) || ((month + 1 == mm) && (day > dd))) { // 過ぎてる
 			yyyy = year + 1;
 		}
 
@@ -476,4 +454,6 @@ public class ContactPickerActivity extends Activity implements OnClickListener {
 
 		return time;
 	}
+	
+	
 }
