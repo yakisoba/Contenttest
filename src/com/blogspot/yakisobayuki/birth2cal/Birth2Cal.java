@@ -6,21 +6,23 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
-
-import com.blogspot.yakisobayuki.birth2cal.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.Data;
 import android.text.format.Time;
@@ -42,11 +44,12 @@ public class Birth2Cal extends Activity implements OnClickListener {
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
 
-	String[] Calendar_list;
-	String[] Calendar_ID;
+	String[] mCalendar_list;
+	String[] mCalendar_ID;
 	String result;
-	String result_tmp;
+	int mButton;
 
+	ProgressDialog prg;
 	CheckBox chk01;
 	private CheckBox check_full;
 	private Button button_import;
@@ -112,6 +115,8 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
 
+		Log.d("Testoutput", "--------------アプリ起動---------------");
+
 		/* 連絡帳から名前と誕生日を取得して格納 */
 		ListView listView = (ListView) findViewById(R.id.list);
 		fillData();
@@ -145,14 +150,30 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		case 1:
 
 			CalendarList();
-			
+
+			SharedPreferences pref = getSharedPreferences("cal_list",
+					MODE_PRIVATE);
+			int button_id = Integer.parseInt(pref.getString(
+					"calendar_list_num", "-1"));
+			String cal_name = pref.getString("calendar_list_name", "");
+
+			Log.d("Testoutput", "ボタン：" + Integer.toString(button_id) + " "
+					+ cal_name);
+
+			if (button_id >= 0) {
+				if (cal_name.equals(mCalendar_list[button_id])) {
+				} else {
+					button_id = -1;
+				}
+			}
+
 			new AlertDialog.Builder(this)
 					.setTitle("カレンダー選択")
-					.setSingleChoiceItems(Calendar_list, -1,
+					.setSingleChoiceItems(mCalendar_list, button_id,
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int which) {
-									result_tmp = Calendar_ID[which];
+									mButton = which;
 								}
 							})
 					.setPositiveButton("OK",
@@ -160,7 +181,19 @@ public class Birth2Cal extends Activity implements OnClickListener {
 								public void onClick(DialogInterface dialog,
 										int whichButton) {
 									new AlertDialog.Builder(Birth2Cal.this);
-									result = result_tmp;
+									result = mCalendar_ID[mButton];
+
+									/* プリファレンス設定 */
+									SharedPreferences pref = getSharedPreferences(
+											"cal_list", MODE_PRIVATE);
+									Editor e = pref.edit();
+									e.putString("calendar_list_name",
+											mCalendar_list[mButton]);
+									e.putString("calendar_list_num",
+											Integer.toString(mButton));
+									e.putString("calendar_list_id", result);
+									e.commit();
+
 								}
 							})
 					.setNegativeButton("Cancel",
@@ -173,10 +206,10 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		}
 		return ret;
 	}
-	
-	public void CalendarList(){
-		Calendar_list = null;
-		Calendar_ID = null;
+
+	public void CalendarList() {
+		mCalendar_list = null;
+		mCalendar_ID = null;
 
 		final String[] projection = new String[] { "_id", "displayName" };
 		final Uri calendars = Uri
@@ -185,8 +218,8 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		final Cursor clist = managedQuery(calendars, projection,
 				"access_level = 700", null, null);
 
-		CalendarList item1 = new CalendarList();
-		item1.setCalendarList(clist.getCount());
+		CalendarList item = new CalendarList();
+		item.setCalendarList(clist.getCount());
 
 		if (clist != null) {
 			try {
@@ -199,10 +232,8 @@ public class Birth2Cal extends Activity implements OnClickListener {
 					String calendarId = clist.getString(clist
 							.getColumnIndex("_id"));
 
-					item1.setCalendarName(calendar, count);
-					item1.setCalendarId(calendarId, count);
-
-					Log.d("Testoutput", calendarId + " : " + calendar);
+					item.setCalendarName(calendar, count);
+					item.setCalendarId(calendarId, count);
 
 					count++;
 				}
@@ -210,8 +241,8 @@ public class Birth2Cal extends Activity implements OnClickListener {
 				clist.close();
 			}
 		}
-		Calendar_list = item1.getCalendarName();
-		Calendar_ID = item1.getCalendarId();
+		mCalendar_list = item.getCalendarName();
+		mCalendar_ID = item.getCalendarId();
 	}
 
 	public class ContactAdapter extends ArrayAdapter<ContactsStatus> {
@@ -313,9 +344,41 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			mAdapter.notifyDataSetChanged();
 
 		} else if (v == button_import) {
+
+			SharedPreferences pref = getSharedPreferences("cal_list",
+					MODE_PRIVATE);
+			String calId = pref.getString("calendar_list_id", "");
+
+			if(calId.equals("")){
+				AlertDialog.Builder dlg;
+				dlg = new AlertDialog.Builder(Birth2Cal.this);
+				dlg.setTitle("error!!");
+				dlg.setMessage("カレンダーが登録されていません。メニューから選択してください。");
+				dlg.show();				
+			}else{
+				prg = new ProgressDialog(this);
+				prg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				prg.setMessage("処理を実行中です...");
+				prg.setCancelable(true);
+				prg.show();
+
+				(new Thread(runnable)).start();
+			}
+		} else {
+			Log.d("Testoutput", "何か押された！");
+		}
+	}
+
+	private Runnable runnable = new Runnable() {
+		@Override
+		public void run() {
+
 			int Completion_count = 0;
 
-			String calId = result;
+			SharedPreferences pref = getSharedPreferences("cal_list",
+					MODE_PRIVATE);
+			String calId = pref.getString("calendar_list_id", "");
+
 			Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
 			if (Integer.parseInt(calId) != 0) {
@@ -329,30 +392,38 @@ public class Birth2Cal extends Activity implements OnClickListener {
 						Completion_count++;
 					}
 				}
-				if (Completion_count == 0) {
-					AlertDialog.Builder dlg;
-					dlg = new AlertDialog.Builder(Birth2Cal.this);
-					dlg.setTitle("error!!");
-					dlg.setMessage("何もチェックされていません");
-					dlg.show();
-				} else {
-					AlertDialog.Builder dlg;
-					dlg = new AlertDialog.Builder(Birth2Cal.this);
-					dlg.setTitle("complete!!");
-					dlg.setMessage("カレンダーへ登録完了！");
-					dlg.show();
-				}
-			} else {
+			}
+
+			Message message = new Message();
+			Bundle bundle = new Bundle();
+			bundle.putString("complete", Integer.toString(Completion_count));
+			message.setData(bundle);
+			handler.sendMessage(message);
+
+			prg.dismiss();
+		}
+	};
+
+	private final Handler handler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			String complete = msg.getData().get("complete").toString();
+
+			if (Integer.parseInt(complete) == 0) {
 				AlertDialog.Builder dlg;
 				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("error!!");
-				dlg.setMessage("カレンダーが登録されてません");
+				dlg.setMessage("何もチェックされていません");
+				dlg.show();
+			} else {
+				AlertDialog.Builder dlg;
+				dlg = new AlertDialog.Builder(Birth2Cal.this);
+				dlg.setTitle("complete!!");
+				dlg.setMessage("カレンダーへ登録完了！");
 				dlg.show();
 			}
-		} else {
-			Log.d("Testoutput", "何か押された！");
 		}
-	}
+	};
 
 	private void CreateEvent(String birthday, String ContactName, int calId) {
 		long startLongDay;
@@ -366,8 +437,10 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		startLongDay = this.getLongDay(birthday, 0);
 		endLongDay = this.getLongDay(birthday, 1);
 
-		/* 日本とアメリカで誤差15時間あるっぽいので */
-		long day_check = startLongDay - 54000000;
+		/* システム時間から誤差を算出する */
+		TimeZone tz = TimeZone.getDefault();
+		long day_check = startLongDay - (tz.getRawOffset() / 60) * 100;
+		// long day_check = startLongDay - tz.getRawOffset();
 
 		/* すでに登録されているときは登録しない */
 		String[] projection = new String[] { "title", "dtstart" };
@@ -380,21 +453,21 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 			if (dtst.equals(Long.toString(day_check))
 					&& titl.equals(ContactName + " 誕生日")) {
-				Log.d("Testoutput", "すでに登録済み");
+				Log.d("Testoutput", ContactName + " 登録済み");
 				eventcheck = 1;
 			}
 		}
 
 		if (eventcheck == 0) {
-			Log.d("Testoutput", "---------------イベント登録開始---------------");
 			values.put("calendar_id", calId);
 			values.put("title", ContactName + " 誕生日");
 			values.put("allDay", 1);
 			values.put("dtstart", startLongDay);
 			values.put("dtend", endLongDay);
+			values.put("eventTimezone", TimeZone.getDefault().getDisplayName());
 
 			cr.insert(events, values);
-			Log.d("Testoutput", "---------------イベント登録終了---------------");
+			Log.d("Testoutput", ContactName + " 登録");
 		}
 	}
 
@@ -443,17 +516,13 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			Date date = format.parse(birth);
 
 			Time times = new Time();
-			times.timezone = TimeZone.getDefault().getDisplayName(
-					Locale.JAPANESE);
+			times.timezone = TimeZone.getDefault().getDisplayName();
 
 			times.set(date.getTime());
 			time = times.normalize(true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		return time;
 	}
-	
-	
 }
