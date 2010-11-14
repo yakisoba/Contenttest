@@ -26,7 +26,7 @@ import android.os.Message;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.Data;
 import android.text.format.Time;
-//import android.util.Log;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -56,6 +56,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 	public class ContactsStatus {
 		private String displayName;
+		private String daykind;
 		private String birthday;
 		private boolean checkflg;
 
@@ -65,6 +66,14 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 		public void setDisplayName(String displayName) {
 			this.displayName = displayName;
+		}
+
+		public String getDayKind() {
+			return daykind;
+		}
+
+		public void setDayKind(String daykind) {
+			this.daykind = daykind;
 		}
 
 		public String getBirth() {
@@ -273,10 +282,13 @@ public class Birth2Cal extends Activity implements OnClickListener {
 						.findViewById(R.id.ContactsName);
 				displayName.setTypeface(Typeface.DEFAULT_BOLD);
 				displayName.setText(item.getDisplayName());
-				// ビューに誕生日をセット
+
+				TextView daykind = (TextView) view.findViewById(R.id.DayKind);
+				daykind.setText(item.getDayKind());
+				
 				TextView birthday = (TextView) view.findViewById(R.id.Birthday);
 				birthday.setText(item.getBirth());
-				// ビューにチェックボックスのON/OFFをセット
+				
 				final CheckBox chk01 = (CheckBox) view
 						.findViewById(R.id.CheckBox);
 				chk01.setChecked(item.getCheckFlag());
@@ -299,13 +311,16 @@ public class Birth2Cal extends Activity implements OnClickListener {
 	private void fillData() {
 		this.mList = new ArrayList<ContactsStatus>();
 
-		Cursor ccont = managedQuery(Data.CONTENT_URI, new String[] {
-				Event.DISPLAY_NAME, Event.DATA }, Data.MIMETYPE + "=? AND "
-				+ Event.TYPE + "=?", new String[] { Event.CONTENT_ITEM_TYPE,
-				String.valueOf(Event.TYPE_BIRTHDAY) }, Data.DISPLAY_NAME);
+		Cursor ccont = managedQuery(
+				Data.CONTENT_URI, 
+				new String[] {Event.DISPLAY_NAME, Event.DATA ,Event.TYPE}, 
+				Data.MIMETYPE + "=? AND ("+ Event.TYPE + "=? OR " + Event.TYPE + "=?)" , 
+				new String[] { Event.CONTENT_ITEM_TYPE,String.valueOf(Event.TYPE_BIRTHDAY),String.valueOf(Event.TYPE_ANNIVERSARY) },
+				Event.DISPLAY_NAME + " ASC");
 
 		// 名前と誕生日のindexを取得して、出力の際に参照する
 		int nameIndex = ccont.getColumnIndex(Event.DISPLAY_NAME);
+		int daykindIndex = ccont.getColumnIndex(Event.TYPE);
 		int birthIndex = ccont.getColumnIndex(Event.DATA);
 
 		if (ccont != null) {
@@ -317,8 +332,17 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 					String displayName = ccont.getString(nameIndex);
 					String date = ccont.getString(birthIndex);
-
+					
+					String daykind = ccont.getString(daykindIndex);
+					
+					if(Integer.parseInt(daykind) == 1){
+						daykind = "記念日";
+					}else if(Integer.parseInt(daykind) == 3){
+						daykind = "誕生日";
+					}
+					
 					item.setDisplayName(displayName);
+					item.setDayKind(daykind + "：");
 					item.setBirth(date);
 					mList.add(item);
 				}
