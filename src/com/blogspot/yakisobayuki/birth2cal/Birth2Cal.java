@@ -26,7 +26,7 @@ import android.os.Message;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.Data;
 import android.text.format.Time;
-import android.util.Log;
+//import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -115,7 +115,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
 
-		Log.d("Testoutput", "--------------アプリ起動---------------");
+		// Log.d("Testoutput", "--------------アプリ起動---------------");
 
 		/* 連絡帳から名前と誕生日を取得して格納 */
 		ListView listView = (ListView) findViewById(R.id.list);
@@ -141,24 +141,25 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		return ret;
 	}
 
-	// オプションメニューアイテムが選択された時に呼び出されます
+	// オプションメニューアイテムが選択された時に呼び出される
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		boolean ret = true;
 
 		switch (item.getItemId()) {
 		case 1:
-
+			/* カレンダーのリストを作成する */
 			CalendarList();
 
+			/* プリファレンスでデータを取得 */
 			SharedPreferences pref = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
 			int button_id = Integer.parseInt(pref.getString(
 					"calendar_list_num", "-1"));
 			String cal_name = pref.getString("calendar_list_name", "");
 
-			Log.d("Testoutput", "ボタン：" + Integer.toString(button_id) + " "
-					+ cal_name);
+			// Log.d("Testoutput", "ボタン：" + Integer.toString(button_id) + " "
+			// + cal_name);
 
 			if (button_id >= 0) {
 				if (cal_name.equals(mCalendar_list[button_id])) {
@@ -167,6 +168,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 				}
 			}
 
+			/* ラジオボタンのダイアログを作成 */
 			new AlertDialog.Builder(this)
 					.setTitle("カレンダー選択")
 					.setSingleChoiceItems(mCalendar_list, button_id,
@@ -183,7 +185,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 									new AlertDialog.Builder(Birth2Cal.this);
 									result = mCalendar_ID[mButton];
 
-									/* プリファレンス設定 */
+									/* プリファレンスでデータを保持 */
 									SharedPreferences pref = getSharedPreferences(
 											"cal_list", MODE_PRIVATE);
 									Editor e = pref.edit();
@@ -207,6 +209,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		return ret;
 	}
 
+	/* カレンダーのリストの作成 */
 	public void CalendarList() {
 		mCalendar_list = null;
 		mCalendar_ID = null;
@@ -349,13 +352,13 @@ public class Birth2Cal extends Activity implements OnClickListener {
 					MODE_PRIVATE);
 			String calId = pref.getString("calendar_list_id", "");
 
-			if(calId.equals("")){
+			if (calId.equals("")) {
 				AlertDialog.Builder dlg;
 				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("error!!");
 				dlg.setMessage("カレンダーが登録されていません。メニューから選択してください。");
-				dlg.show();				
-			}else{
+				dlg.show();
+			} else {
 				prg = new ProgressDialog(this);
 				prg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 				prg.setMessage("処理を実行中です...");
@@ -365,7 +368,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 				(new Thread(runnable)).start();
 			}
 		} else {
-			Log.d("Testoutput", "何か押された！");
+			// Log.d("Testoutput", "何か押された！");
 		}
 	}
 
@@ -379,7 +382,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 					MODE_PRIVATE);
 			String calId = pref.getString("calendar_list_id", "");
 
-			Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
+			// Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
 			if (Integer.parseInt(calId) != 0) {
 
@@ -453,7 +456,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 			if (dtst.equals(Long.toString(day_check))
 					&& titl.equals(ContactName + " 誕生日")) {
-				Log.d("Testoutput", ContactName + " 登録済み");
+				// Log.d("Testoutput", ContactName + " 登録済み");
 				eventcheck = 1;
 			}
 		}
@@ -467,7 +470,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			values.put("eventTimezone", TimeZone.getDefault().getDisplayName());
 
 			cr.insert(events, values);
-			Log.d("Testoutput", ContactName + " 登録");
+			// Log.d("Testoutput", ContactName + " 登録");
 		}
 	}
 
