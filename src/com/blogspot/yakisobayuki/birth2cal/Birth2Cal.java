@@ -1,6 +1,5 @@
 package com.blogspot.yakisobayuki.birth2cal;
 
-import java.lang.reflect.Member;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,12 +19,12 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.CursorJoiner;
-import android.database.CursorJoiner.Result;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
@@ -128,33 +127,26 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
 
-		// Log.d("Testoutput", "--------------アプリ起動---------------");
-
-		/* 連絡帳から名前と誕生日を取得して格納 */
 		ListView listView = (ListView) findViewById(R.id.list);
 		fillData();
 
 		mAdapter = new ContactAdapter(this, R.layout.listview, mList);
 		listView.setAdapter(mAdapter);
 
-		/* 「全てチェック」ボタンが押された時の処理 */
 		check_full = (CheckBox) findViewById(R.id.CheckBox_full);
 		check_full.setOnClickListener(this);
 
-		/* 「取り込み」ボタンが押された時の処理 */
 		button_import = (Button) findViewById(R.id.button_import);
 		button_import.setOnClickListener(this);
 
 	}
 
-	/* メニューを表示 */
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean ret = super.onCreateOptionsMenu(menu);
 		menu.add(0, Menu.FIRST, Menu.NONE, "カレンダー選択");
 		return ret;
 	}
 
-	// オプションメニューアイテムが選択された時に呼び出される
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		boolean ret = true;
@@ -171,9 +163,6 @@ public class Birth2Cal extends Activity implements OnClickListener {
 					"calendar_list_num", "-1"));
 			String cal_name = pref.getString("calendar_list_name", "");
 
-			// Log.d("Testoutput", "ボタン：" + Integer.toString(button_id) + " "
-			// + cal_name);
-
 			if (button_id >= 0) {
 				if (cal_name.equals(mCalendar_list[button_id])) {
 				} else {
@@ -181,7 +170,6 @@ public class Birth2Cal extends Activity implements OnClickListener {
 				}
 			}
 
-			/* ラジオボタンのダイアログを作成 */
 			new AlertDialog.Builder(this)
 					.setTitle("カレンダー選択")
 					.setSingleChoiceItems(mCalendar_list, button_id,
@@ -198,7 +186,6 @@ public class Birth2Cal extends Activity implements OnClickListener {
 									new AlertDialog.Builder(Birth2Cal.this);
 									result = mCalendar_ID[mButton];
 
-									/* プリファレンスでデータを保持 */
 									SharedPreferences pref = getSharedPreferences(
 											"cal_list", MODE_PRIVATE);
 									Editor e = pref.edit();
@@ -315,49 +302,83 @@ public class Birth2Cal extends Activity implements OnClickListener {
 	private void fillData() {
 		this.mList = new ArrayList<ContactsStatus>();
 
-		Cursor ccont = managedQuery(
-				Data.CONTENT_URI,
-				new String[] { Event.DISPLAY_NAME, Event.DATA, Event.TYPE, },
-				Data.MIMETYPE + "=? AND (" + Event.TYPE + "=? OR " + Event.TYPE
-						+ "=?)",
-				new String[] { Event.CONTENT_ITEM_TYPE,
-						String.valueOf(Event.TYPE_BIRTHDAY),
-						String.valueOf(Event.TYPE_ANNIVERSARY) }, null);
+		Uri uri = Data.CONTENT_URI;
+		String[] projection = new String[] { StructuredName.CONTACT_ID,
+				StructuredName.PHONETIC_FAMILY_NAME,
+				StructuredName.PHONETIC_GIVEN_NAME };
+		String selection = Data.MIMETYPE + "=?";
+		String[] selectionArgs = new String[] { StructuredName.CONTENT_ITEM_TYPE };
 
-		// 名前と誕生日のindexを取得して、出力の際に参照する
-		int nameIndex = ccont.getColumnIndex(Event.DISPLAY_NAME);
-		int daykindIndex = ccont.getColumnIndex(Event.TYPE);
-		int birthIndex = ccont.getColumnIndex(Event.DATA);
+		Cursor c1 = managedQuery(uri, projection, selection, selectionArgs,
+				StructuredName.PHONETIC_FAMILY_NAME + " ASC ,"
+						+ StructuredName.PHONETIC_GIVEN_NAME + " ASC");
 
-		if (ccont != null) {
+		projection = new String[] { Event.DISPLAY_NAME, Event.DATA, Event.TYPE };
+		selection = Data.CONTACT_ID + "=? AND " + Data.MIMETYPE + "=? AND ("
+				+ Event.TYPE + "=? OR " + Event.TYPE + "=?) ";
+
+		if (c1 != null) {
 			try {
+				while (c1.moveToNext()) {
 
-				while (ccont.moveToNext()) {
+					selectionArgs = new String[] { c1.getString(0),
+							Event.CONTENT_ITEM_TYPE,
+							String.valueOf(Event.TYPE_ANNIVERSARY),
+							String.valueOf(Event.TYPE_BIRTHDAY) };
 
-					ContactsStatus item = new ContactsStatus();
+					Cursor c3 = managedQuery(
+							uri,
+							new String[] { Event.CONTACT_ID,
+									Event.DISPLAY_NAME, Event.TYPE, Event.DATA },
+							Data.CONTACT_ID + "=? AND " + Data.MIMETYPE
+									+ "=? AND (" + Event.TYPE + "=? OR "
+									+ Event.TYPE + "=? )",
+							new String[] { c1.getString(0),
+									Event.CONTENT_ITEM_TYPE,
+									String.valueOf(Event.TYPE_ANNIVERSARY),
+									String.valueOf(Event.TYPE_BIRTHDAY) }, null);
 
-					String displayName = ccont.getString(nameIndex);
-					String date = ccont.getString(birthIndex);
+					if (c3 != null) {
+						try {
+							while (c3.moveToNext()) {
+								Log.d("Testoutput",
+										c3.getString(c3
+												.getColumnIndex(Event.CONTACT_ID))
+												+ " "
+												+ c3.getString(c3
+														.getColumnIndex(Event.DATA)));
 
-					String daykind = ccont.getString(daykindIndex);
+								ContactsStatus item = new ContactsStatus();
 
-					if (Integer.parseInt(daykind) == 1) {
-						daykind = "記念日";
-					} else if (Integer.parseInt(daykind) == 3) {
-						daykind = "誕生日";
+								String displayName = c3.getString(c3
+										.getColumnIndex(Event.DISPLAY_NAME));
+								String date = c3.getString(c3
+										.getColumnIndex(Event.DATA));
+
+								String daykind = c3.getString(c3
+										.getColumnIndex(Event.TYPE));
+
+								if (Integer.parseInt(daykind) == 1) {
+									daykind = "記念日";
+								} else if (Integer.parseInt(daykind) == 3) {
+									daykind = "誕生日";
+								}
+
+								item.setDisplayName(displayName);
+								item.setDayKind(daykind);
+								item.setBirth(date);
+								mList.add(item);
+							}
+						} finally {
+							c3.close();
+						}
 					}
-
-					// Log.d("Testoutput", ccont.getString(yomiganaIdx));
-
-					item.setDisplayName(displayName);
-					item.setDayKind(daykind);
-					item.setBirth(date);
-					mList.add(item);
 				}
 			} finally {
-				ccont.close();
+				c1.close();
 			}
 		}
+
 	}
 
 	@Override
