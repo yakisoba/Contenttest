@@ -18,6 +18,9 @@
 				android:layout_height="wrap_content" android:id="@+id/DayKind"
 				android:text="DayKind"></TextView>
 			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:id="@+id/noid"
+				android:text="："></TextView>
+			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:id="@+id/Birthday"
 				android:text="Birthday" />
 		</LinearLayout>

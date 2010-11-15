@@ -1,5 +1,6 @@
 package com.blogspot.yakisobayuki.birth2cal;
 
+import java.lang.reflect.Member;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,12 +19,15 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
+import android.database.CursorJoiner;
+import android.database.CursorJoiner.Result;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract.CommonDataKinds.Event;
+import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.text.format.Time;
 import android.util.Log;
@@ -285,10 +289,10 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 				TextView daykind = (TextView) view.findViewById(R.id.DayKind);
 				daykind.setText(item.getDayKind());
-				
+
 				TextView birthday = (TextView) view.findViewById(R.id.Birthday);
 				birthday.setText(item.getBirth());
-				
+
 				final CheckBox chk01 = (CheckBox) view
 						.findViewById(R.id.CheckBox);
 				chk01.setChecked(item.getCheckFlag());
@@ -312,11 +316,13 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		this.mList = new ArrayList<ContactsStatus>();
 
 		Cursor ccont = managedQuery(
-				Data.CONTENT_URI, 
-				new String[] {Event.DISPLAY_NAME, Event.DATA ,Event.TYPE}, 
-				Data.MIMETYPE + "=? AND ("+ Event.TYPE + "=? OR " + Event.TYPE + "=?)" , 
-				new String[] { Event.CONTENT_ITEM_TYPE,String.valueOf(Event.TYPE_BIRTHDAY),String.valueOf(Event.TYPE_ANNIVERSARY) },
-				Event.DISPLAY_NAME + " ASC");
+				Data.CONTENT_URI,
+				new String[] { Event.DISPLAY_NAME, Event.DATA, Event.TYPE, },
+				Data.MIMETYPE + "=? AND (" + Event.TYPE + "=? OR " + Event.TYPE
+						+ "=?)",
+				new String[] { Event.CONTENT_ITEM_TYPE,
+						String.valueOf(Event.TYPE_BIRTHDAY),
+						String.valueOf(Event.TYPE_ANNIVERSARY) }, null);
 
 		// 名前と誕生日のindexを取得して、出力の際に参照する
 		int nameIndex = ccont.getColumnIndex(Event.DISPLAY_NAME);
@@ -332,17 +338,19 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 					String displayName = ccont.getString(nameIndex);
 					String date = ccont.getString(birthIndex);
-					
+
 					String daykind = ccont.getString(daykindIndex);
-					
-					if(Integer.parseInt(daykind) == 1){
+
+					if (Integer.parseInt(daykind) == 1) {
 						daykind = "記念日";
-					}else if(Integer.parseInt(daykind) == 3){
+					} else if (Integer.parseInt(daykind) == 3) {
 						daykind = "誕生日";
 					}
-					
+
+					// Log.d("Testoutput", ccont.getString(yomiganaIdx));
+
 					item.setDisplayName(displayName);
-					item.setDayKind(daykind + "：");
+					item.setDayKind(daykind);
 					item.setBirth(date);
 					mList.add(item);
 				}
@@ -414,7 +422,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 					if (status.getCheckFlag() == true) {
 
 						CreateEvent(status.getBirth(), status.getDisplayName(),
-								Integer.parseInt(calId));
+								status.getDayKind(), Integer.parseInt(calId));
 
 						Completion_count++;
 					}
@@ -452,7 +460,8 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		}
 	};
 
-	private void CreateEvent(String birthday, String ContactName, int calId) {
+	private void CreateEvent(String birthday, String ContactName,
+			String daykind, int calId) {
 		long startLongDay;
 		long endLongDay;
 		int eventcheck = 0;
@@ -479,7 +488,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			String dtst = cevent.getString(cevent.getColumnIndex("dtstart"));
 
 			if (dtst.equals(Long.toString(day_check))
-					&& titl.equals(ContactName + " 誕生日")) {
+					&& titl.equals(ContactName + " " + daykind)) {
 				// Log.d("Testoutput", ContactName + " 登録済み");
 				eventcheck = 1;
 			}
@@ -487,7 +496,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 
 		if (eventcheck == 0) {
 			values.put("calendar_id", calId);
-			values.put("title", ContactName + " 誕生日");
+			values.put("title", ContactName + " " + daykind);
 			values.put("allDay", 1);
 			values.put("dtstart", startLongDay);
 			values.put("dtend", endLongDay);

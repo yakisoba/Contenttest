@@ -15,15 +15,16 @@ public final class R {
         public static final int icon=0x7f020001;
     }
     public static final class id {
-        public static final int Birthday=0x7f050004;
+        public static final int Birthday=0x7f050005;
         public static final int CheckBox=0x7f050000;
-        public static final int CheckBox_full=0x7f050006;
+        public static final int CheckBox_full=0x7f050007;
         public static final int ContactsName=0x7f050001;
         public static final int DayKind=0x7f050003;
         public static final int LinearLayoutday=0x7f050002;
-        public static final int button_import=0x7f050007;
-        public static final int line_button=0x7f050005;
-        public static final int list=0x7f050008;
+        public static final int button_import=0x7f050008;
+        public static final int line_button=0x7f050006;
+        public static final int list=0x7f050009;
+        public static final int noid=0x7f050004;
     }
     public static final class layout {
         public static final int listview=0x7f030000;
