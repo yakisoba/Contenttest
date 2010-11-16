@@ -1,4 +1,4 @@
-package com.blogspot.yakisobayuki.birth2cal;
+package com.blogspot.yakisobayuki.birth2cal2;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -18,13 +18,11 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
-import android.database.CursorJoiner;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;

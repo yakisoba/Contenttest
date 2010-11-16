@@ -5,14 +5,13 @@
  * should not be modified by hand.
  */
 
-package com.blogspot.yakisobayuki.birth2cal;
+package com.blogspot.yakisobayuki.birth2cal2;
 
 public final class R {
     public static final class attr {
     }
     public static final class drawable {
-        public static final int b2c=0x7f020000;
-        public static final int icon=0x7f020001;
+        public static final int icon=0x7f020000;
     }
     public static final class id {
         public static final int Birthday=0x7f050005;
