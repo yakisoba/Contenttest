@@ -124,7 +124,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
-
+		
 		ListView listView = (ListView) findViewById(R.id.list);
 		fillData();
 
@@ -306,7 +306,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 				StructuredName.PHONETIC_GIVEN_NAME };
 		String selection = Data.MIMETYPE + "=?";
 		String[] selectionArgs = new String[] { StructuredName.CONTENT_ITEM_TYPE };
-
+		
 		Cursor c1 = managedQuery(uri, projection, selection, selectionArgs,
 				StructuredName.PHONETIC_FAMILY_NAME + " ASC ,"
 						+ StructuredName.PHONETIC_GIVEN_NAME + " ASC");
