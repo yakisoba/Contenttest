@@ -18,7 +18,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -124,8 +123,8 @@ public class Birth2Cal extends Activity implements OnClickListener {
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
-		
-		ListView listView = (ListView) findViewById(R.id.list);
+
+        ListView listView = (ListView) findViewById(R.id.list);
 		fillData();
 
 		mAdapter = new ContactAdapter(this, R.layout.listview, mList);
@@ -266,20 +265,19 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			final ContactsStatus item = getItem(position);
 
 			if (item != null) {
-				// ビューにユーザ名をセット
+				
+				
 				TextView displayName = (TextView) view
-						.findViewById(R.id.ContactsName);
-				displayName.setTypeface(Typeface.DEFAULT_BOLD);
-				displayName.setText(item.getDisplayName());
-
-				TextView daykind = (TextView) view.findViewById(R.id.DayKind);
-				daykind.setText(item.getDayKind());
-
-				TextView birthday = (TextView) view.findViewById(R.id.Birthday);
-				birthday.setText(item.getBirth());
-
+						.findViewById(R.id.ContactsName1);
+				TextView daykind = (TextView) view.findViewById(R.id.DayKind1);
+				TextView birthday = (TextView) view
+						.findViewById(R.id.Birthday1);
 				final CheckBox chk01 = (CheckBox) view
-						.findViewById(R.id.CheckBox);
+						.findViewById(R.id.CheckBox1);
+
+				displayName.setText(item.getDisplayName());
+				daykind.setText(item.getDayKind());
+				birthday.setText(item.getBirth());
 				chk01.setChecked(item.getCheckFlag());
 
 				chk01.setOnClickListener(new OnClickListener() {
@@ -306,7 +304,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 				StructuredName.PHONETIC_GIVEN_NAME };
 		String selection = Data.MIMETYPE + "=?";
 		String[] selectionArgs = new String[] { StructuredName.CONTENT_ITEM_TYPE };
-		
+
 		Cursor c1 = managedQuery(uri, projection, selection, selectionArgs,
 				StructuredName.PHONETIC_FAMILY_NAME + " ASC ,"
 						+ StructuredName.PHONETIC_GIVEN_NAME + " ASC");
@@ -408,6 +406,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("error!!");
 				dlg.setMessage("カレンダーが登録されていません。メニューから選択してください。");
+				dlg.setPositiveButton("OK", null);
 				dlg.show();
 			} else {
 				prg = new ProgressDialog(this);
@@ -463,19 +462,18 @@ public class Birth2Cal extends Activity implements OnClickListener {
 		public void handleMessage(Message msg) {
 			String complete = msg.getData().get("complete").toString();
 
+			AlertDialog.Builder dlg;
+			dlg = new AlertDialog.Builder(Birth2Cal.this);
+			dlg.setPositiveButton("OK", null);
+			
 			if (Integer.parseInt(complete) == 0) {
-				AlertDialog.Builder dlg;
-				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("error!!");
 				dlg.setMessage("何もチェックされていません");
-				dlg.show();
 			} else {
-				AlertDialog.Builder dlg;
-				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("complete!!");
 				dlg.setMessage("カレンダーへ登録完了！");
-				dlg.show();
 			}
+			dlg.show();
 		}
 	};
 
