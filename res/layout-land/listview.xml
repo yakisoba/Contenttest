@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:orientation="horizontal" android:layout_height="wrap_content" android:layout_width="fill_parent">
+	android:orientation="horizontal" android:layout_height="wrap_content"
+	android:layout_width="fill_parent">
 	<CheckBox android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:id="@+id/CheckBox1"></CheckBox>
 
@@ -9,10 +10,12 @@
 
 		<TextView android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:id="@+id/ContactsName1"
-			android:text="ContactsName" android:textSize="20sp" android:width="200sp"/>
+			android:text="ContactsName" android:textSize="20sp" android:width="200sp" />
 
 		<LinearLayout android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:id="@+id/LinearLayout1">
+			<ImageView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:id="@+id/Image1"></ImageView>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:id="@+id/DayKind1"
 				android:text="DayKind"></TextView>
@@ -25,7 +28,7 @@
 		</LinearLayout>
 	</LinearLayout>
 
-	
 
-	
+
+
 </LinearLayout>  

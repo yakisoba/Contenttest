@@ -36,6 +36,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -274,11 +275,17 @@ public class Birth2Cal extends Activity implements OnClickListener {
 						.findViewById(R.id.Birthday1);
 				final CheckBox chk01 = (CheckBox) view
 						.findViewById(R.id.CheckBox1);
-
+				ImageView image = (ImageView) view.findViewById(R.id.Image1);				
+				
 				displayName.setText(item.getDisplayName());
 				daykind.setText(item.getDayKind());
 				birthday.setText(item.getBirth());
 				chk01.setChecked(item.getCheckFlag());
+				if(item.getDayKind().equals("誕生日")){
+					image.setImageResource(R.drawable.heart);
+				}else{
+					image.setImageResource(R.drawable.star);
+				}
 
 				chk01.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
