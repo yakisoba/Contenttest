@@ -26,7 +26,7 @@ import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.text.format.Time;
-import android.util.Log;
+//import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,10 +40,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class Birth2Cal extends Activity implements OnClickListener {
+public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	/** Called when the activity is first created. */
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
+	ListView listView;
 
 	String[] mCalendar_list;
 	String[] mCalendar_ID;
@@ -124,20 +125,48 @@ public class Birth2Cal extends Activity implements OnClickListener {
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
+		listView = (ListView) findViewById(R.id.list);
 
-        ListView listView = (ListView) findViewById(R.id.list);
-		fillData();
-
-		mAdapter = new ContactAdapter(this, R.layout.listview, mList);
-		listView.setAdapter(mAdapter);
+		readDialog();
 
 		check_full = (CheckBox) findViewById(R.id.CheckBox_full);
 		check_full.setOnClickListener(this);
 
 		button_import = (Button) findViewById(R.id.button_import);
 		button_import.setOnClickListener(this);
+	}
+
+	private void readDialog() {
+		prg = new ProgressDialog(this);
+		prg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		prg.setMessage("読込中…");
+		prg.setCancelable(false);
+		prg.show();
+
+		Thread thread = new Thread(this);
+		thread.start();
+	}
+
+	public void run() {
+		fillData();
+
+		Message message = new Message();
+		Bundle bundle = new Bundle();
+		message.setData(bundle);
+		handler1.sendEmptyMessage(0);
+
+		prg.dismiss();
 
 	}
+
+	private final Handler handler1 = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			mAdapter = new ContactAdapter(Birth2Cal.this, R.layout.listview,
+					mList);
+			listView.setAdapter(mAdapter);
+		}
+	};
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean ret = super.onCreateOptionsMenu(menu);
@@ -266,8 +295,7 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			final ContactsStatus item = getItem(position);
 
 			if (item != null) {
-				
-				
+
 				TextView displayName = (TextView) view
 						.findViewById(R.id.ContactsName1);
 				TextView daykind = (TextView) view.findViewById(R.id.DayKind1);
@@ -275,15 +303,15 @@ public class Birth2Cal extends Activity implements OnClickListener {
 						.findViewById(R.id.Birthday1);
 				final CheckBox chk01 = (CheckBox) view
 						.findViewById(R.id.CheckBox1);
-				ImageView image = (ImageView) view.findViewById(R.id.Image1);				
-				
+				ImageView image = (ImageView) view.findViewById(R.id.Image1);
+
 				displayName.setText(item.getDisplayName());
 				daykind.setText(item.getDayKind());
 				birthday.setText(item.getBirth());
 				chk01.setChecked(item.getCheckFlag());
-				if(item.getDayKind().equals("誕生日")){
+				if (item.getDayKind().equals("誕生日")) {
 					image.setImageResource(R.drawable.heart);
-				}else{
+				} else {
 					image.setImageResource(R.drawable.star);
 				}
 
@@ -344,13 +372,12 @@ public class Birth2Cal extends Activity implements OnClickListener {
 					if (c3 != null) {
 						try {
 							while (c3.moveToNext()) {
-								Log.d("Testoutput",
-										c3.getString(c3
-												.getColumnIndex(Event.CONTACT_ID))
-												+ " "
-												+ c3.getString(c3
-														.getColumnIndex(Event.DATA)));
-
+								/*
+								 * Log.d("Testoutput", c3.getString(c3
+								 * .getColumnIndex(Event.CONTACT_ID)) + " " +
+								 * c3.getString(c3
+								 * .getColumnIndex(Event.DATA)));
+								 */
 								ContactsStatus item = new ContactsStatus();
 
 								String displayName = c3.getString(c3
@@ -409,16 +436,19 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			String calId = pref.getString("calendar_list_id", "");
 
 			if (calId.equals("")) {
+				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nocalendar);
+				View layout = getLayoutInflater().inflate(R.layout.nocalendar, alert);
+
 				AlertDialog.Builder dlg;
 				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("error!!");
-				dlg.setMessage("カレンダーが登録されていません。メニューから選択してください。");
+				dlg.setView(layout);
 				dlg.setPositiveButton("OK", null);
 				dlg.show();
 			} else {
 				prg = new ProgressDialog(this);
 				prg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-				prg.setMessage("処理を実行中です...");
+				prg.setMessage("カレンダーに登録中です...");
 				prg.setCancelable(true);
 				prg.show();
 
@@ -472,13 +502,19 @@ public class Birth2Cal extends Activity implements OnClickListener {
 			AlertDialog.Builder dlg;
 			dlg = new AlertDialog.Builder(Birth2Cal.this);
 			dlg.setPositiveButton("OK", null);
-			
+
 			if (Integer.parseInt(complete) == 0) {
+				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nochek);
+				View layout = getLayoutInflater().inflate(R.layout.nocheck, alert);
+				
 				dlg.setTitle("error!!");
-				dlg.setMessage("何もチェックされていません");
+				dlg.setView(layout);
 			} else {
+				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_complete);
+				View layout = getLayoutInflater().inflate(R.layout.com_calendar, alert);
+				
 				dlg.setTitle("complete!!");
-				dlg.setMessage("カレンダーへ登録完了！");
+				dlg.setView(layout);
 			}
 			dlg.show();
 		}
