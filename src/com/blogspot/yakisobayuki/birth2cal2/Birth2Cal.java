@@ -718,6 +718,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		year_id = Integer.toString(yyyy + Integer.parseInt(year_id) - 1);
 
 		String mm_id, dd_id;
+		
 		if (mm < 10) {
 			mm_id = "0" + Integer.toString(mm);
 		} else {
