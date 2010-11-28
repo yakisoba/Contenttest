@@ -29,7 +29,7 @@
 					android:layout_height="wrap_content" android:id="@+id/Birthday1"
 					android:text="Birthday" />
 			
-</LinearLayout>
+			</LinearLayout>
 		</LinearLayout>
 	</LinearLayout>
 </LinearLayout>

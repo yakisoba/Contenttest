@@ -26,7 +26,7 @@ import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.text.format.Time;
-//import android.util.Log;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +50,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	String[] mCalendar_ID;
 	String result;
 	int mButton;
+	int mButton_y;
 
 	ProgressDialog prg;
 	CheckBox chk01;
@@ -171,6 +172,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean ret = super.onCreateOptionsMenu(menu);
 		menu.add(0, Menu.FIRST, Menu.NONE, "カレンダー選択");
+		menu.add(0, Menu.FIRST + 1, Menu.NONE, "繰り返し年数設定");
 		return ret;
 	}
 
@@ -232,6 +234,51 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 									new AlertDialog.Builder(Birth2Cal.this);
 								}
 							}).show();
+			break;
+
+		case 2:
+			final String[] check_year = { "1", "2", "3", "4", "5", "6", "7",
+					"8", "9", "10", "11", "12", "13", "14", "15", "期間なし" };
+
+			SharedPreferences prefr = getSharedPreferences("cal_list",
+					MODE_PRIVATE);
+			String year_id = prefr.getString("calendar_year", "1");
+			if (year_id.equals("期間なし")) {
+				year_id = "16";
+			}
+
+			new AlertDialog.Builder(this)
+					.setTitle("登録年数選択")
+					.setSingleChoiceItems(check_year,
+							Integer.parseInt(year_id) - 1,
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int which) {
+									mButton_y = which;
+								}
+							})
+					.setPositiveButton("OK",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int whichButton) {
+									new AlertDialog.Builder(Birth2Cal.this);
+
+									SharedPreferences pref = getSharedPreferences(
+											"cal_list", MODE_PRIVATE);
+									Editor e = pref.edit();
+									e.putString("calendar_year",
+											check_year[mButton_y]);
+									e.commit();
+								}
+							})
+					.setNegativeButton("Cancel",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int whichButton) {
+									new AlertDialog.Builder(Birth2Cal.this);
+								}
+							}).show();
+			break;
 		}
 		return ret;
 	}
@@ -372,12 +419,6 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 					if (c3 != null) {
 						try {
 							while (c3.moveToNext()) {
-								/*
-								 * Log.d("Testoutput", c3.getString(c3
-								 * .getColumnIndex(Event.CONTACT_ID)) + " " +
-								 * c3.getString(c3
-								 * .getColumnIndex(Event.DATA)));
-								 */
 								ContactsStatus item = new ContactsStatus();
 
 								String displayName = c3.getString(c3
@@ -437,7 +478,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 			if (calId.equals("")) {
 				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nocalendar);
-				View layout = getLayoutInflater().inflate(R.layout.nocalendar, alert);
+				View layout = getLayoutInflater().inflate(R.layout.nocalendar,
+						alert);
 
 				AlertDialog.Builder dlg;
 				dlg = new AlertDialog.Builder(Birth2Cal.this);
@@ -455,7 +497,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				(new Thread(runnable)).start();
 			}
 		} else {
-			// Log.d("Testoutput", "何か押された！");
+
 		}
 	}
 
@@ -468,8 +510,6 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			SharedPreferences pref = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
 			String calId = pref.getString("calendar_list_id", "");
-
-			// Log.d("Testoutput", "該当のカレンダーID：" + Integer.parseInt(calId));
 
 			if (Integer.parseInt(calId) != 0) {
 
@@ -505,14 +545,16 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 			if (Integer.parseInt(complete) == 0) {
 				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nochek);
-				View layout = getLayoutInflater().inflate(R.layout.nocheck, alert);
-				
+				View layout = getLayoutInflater().inflate(R.layout.nocheck,
+						alert);
+
 				dlg.setTitle("error!!");
 				dlg.setView(layout);
 			} else {
 				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_complete);
-				View layout = getLayoutInflater().inflate(R.layout.com_calendar, alert);
-				
+				View layout = getLayoutInflater().inflate(
+						R.layout.com_calendar, alert);
+
 				dlg.setTitle("complete!!");
 				dlg.setView(layout);
 			}
@@ -522,55 +564,130 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 	private void CreateEvent(String birthday, String ContactName,
 			String daykind, int calId) {
-		long startLongDay;
-		long endLongDay;
+		long startLongDay, endLongDay;
+		String rrule;
 		int eventcheck = 0;
 
-		Uri events = Uri.parse("content://com.android.calendar/events");
-		ContentValues values = new ContentValues();
-		ContentResolver cr = this.getContentResolver();
+		SharedPreferences prefr = getSharedPreferences("cal_list", MODE_PRIVATE);
+		String year_id = prefr.getString("calendar_year", "1");
+		if (year_id.equals("期間なし")) {
+			year_id = "16";
+		}
 
-		startLongDay = this.getLongDay(birthday, 0);
-		endLongDay = this.getLongDay(birthday, 1);
+		String[] str = { "", "", "" };
+		str = getLongDay(birthday, year_id);
 
-		/* システム時間から誤差を算出する */
+		Log.d("Testoutput", str[0] + " " + str[1] + " " + str[2]);
+		startLongDay = Long.valueOf(str[1]);
+		endLongDay = Long.valueOf(str[2]);
+
+		if (year_id.equals("16")) {
+			rrule = "FREQ=YEARLY";
+		} else {
+			rrule = "FREQ=YEARLY;UNTIL=" + str[0] + "T010000Z";
+		}
+
 		TimeZone tz = TimeZone.getDefault();
 		long day_check = startLongDay - (tz.getRawOffset() / 60) * 100;
 		// long day_check = startLongDay - tz.getRawOffset();
 
-		/* すでに登録されているときは登録しない */
-		String[] projection = new String[] { "title", "dtstart" };
+		Uri events = Uri.parse("content://com.android.calendar/events");
+		String[] projection = new String[] { "title", "dtstart", "_id" };
 		Cursor cevent = managedQuery(events, projection, "calendar_id ="
 				+ calId + " AND dtstart =" + day_check, null, null);
 
+		String titl, dtst, id = null;
 		while (cevent.moveToNext()) {
-			String titl = cevent.getString(cevent.getColumnIndex("title"));
-			String dtst = cevent.getString(cevent.getColumnIndex("dtstart"));
+			titl = cevent.getString(cevent.getColumnIndex("title"));
+			dtst = cevent.getString(cevent.getColumnIndex("dtstart"));
+
+			Log.d("Testoutput", "dt:" + dtst + " ch:" + day_check);
+			Log.d("Testoutput", "ti:" + titl + " cd:" + ContactName + " "
+					+ daykind);
 
 			if (dtst.equals(Long.toString(day_check))
 					&& titl.equals(ContactName + " " + daykind)) {
-				// Log.d("Testoutput", ContactName + " 登録済み");
+				id = cevent.getString(cevent.getColumnIndex("_id"));
+				Log.d("Testoutput", ContactName + "の誕生日は登録済み" + id);
 				eventcheck = 1;
 			}
 		}
 
-		if (eventcheck == 0) {
-			values.put("calendar_id", calId);
-			values.put("title", ContactName + " " + daykind);
-			values.put("allDay", 1);
-			values.put("dtstart", startLongDay);
-			values.put("dtend", endLongDay);
-			values.put("eventTimezone", TimeZone.getDefault().getDisplayName());
+		ContentValues values = new ContentValues();
+		ContentResolver cr = getContentResolver();
 
-			cr.insert(events, values);
-			// Log.d("Testoutput", ContactName + " 登録");
+		Log.d("Testoutput", "Eventcheck: " + Integer.toString(eventcheck));
+		SharedPreferences prefr_tmp = getSharedPreferences("cal_list",
+				MODE_PRIVATE);
+		String year_id_tmp = prefr_tmp.getString("calendar_year", "1");
+		String cal_name_tmp = prefr_tmp.getString("calendar_list_name", "");
+
+		Log.d("Testoutput", year_id_tmp + " " + cal_name_tmp);
+
+		if (eventcheck == 0) {
+
+			if (year_id.equals("1")) {
+				values.put("calendar_id", calId);
+				values.put("title", ContactName + " " + daykind);
+				values.put("allDay", 1);
+				values.put("dtstart", startLongDay);
+				values.put("dtend", endLongDay);
+				values.put("eventTimezone", TimeZone.getDefault()
+						.getDisplayName());
+				cr.insert(events, values);
+			} else {
+				values.put("calendar_id", calId);
+				values.put("title", ContactName + " " + daykind);
+				values.put("allDay", 1);
+				values.put("dtstart", startLongDay);
+				values.put("dtend", endLongDay);
+				values.put("eventTimezone", TimeZone.getDefault()
+						.getDisplayName());
+				values.put("rrule", rrule);
+				values.put("duration", "P1D");
+				cr.insert(events, values);
+			}
+			Log.d("Testoutput", "cal insert");
+
+		} else if (eventcheck == 1) {
+
+			Log.d("Testoutput", year_id);
+			Uri pevents = Uri.withAppendedPath(events, id);
+			if (year_id.equals("1")) {
+				values.put("calendar_id", calId);
+				values.put("title", ContactName + " " + daykind);
+				values.put("allDay", 1);
+				values.put("dtstart", startLongDay);
+				values.put("dtend", endLongDay);
+				values.put("eventTimezone", TimeZone.getDefault()
+						.getDisplayName());
+				values.putNull("rrule");
+				values.putNull("duration");
+				Log.d("Testoutput", "year_id = 1");
+				cr.update(pevents, values, null, null);
+			} else {
+				Log.d("Testoutput", Integer.toString(calId));
+				values.put("calendar_id", calId);
+				values.put("title", ContactName + " " + daykind);
+				values.put("allDay", 1);
+				values.put("dtstart", startLongDay);
+				values.put("dtend", endLongDay);
+				values.put("eventTimezone", TimeZone.getDefault()
+						.getDisplayName());
+				values.put("rrule", rrule);
+				values.put("duration", "P1D");
+				Log.d("Testoutput", ContactName + " " + rrule);
+				cr.update(pevents, values, null, null);
+			}
 		}
 	}
 
-	private long getLongDay(String str, int st_end) {
+	private String[] getLongDay(String str, String year_id) {
 		long time = 0;
 		String birth = null;
 		int yyyy = 0, mm = 0, dd = 0;
+
+		String[] setDay = { "", "", "" };
 
 		/* 今日の日付取得 */
 		final Calendar calendar = Calendar.getInstance();
@@ -583,8 +700,10 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			Date date = format.parse(str);
 			birth = format.format(date);
 
+			yyyy = Integer.parseInt(birth.substring(0, 4));
 			mm = Integer.parseInt(birth.substring(5, 7));
 			dd = Integer.parseInt(birth.substring(8, 10));
+
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -596,29 +715,43 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			yyyy = year + 1;
 		}
 
-		/* なぜか1日前に登録されるので下のような対処とする */
-		if (st_end == 0) {
-			dd = dd + 1;
-		} else if (st_end == 1) {
-			dd = dd + 2;
+		year_id = Integer.toString(yyyy + Integer.parseInt(year_id) - 1);
+
+		String mm_id, dd_id;
+		if (mm < 10) {
+			mm_id = "0" + Integer.toString(mm);
+		} else {
+			mm_id = Integer.toString(mm);
+		}
+		if (dd < 10) {
+			dd_id = "0" + Integer.toString(dd);
+		} else {
+			dd_id = Integer.toString(dd);
 		}
 
-		birth = Integer.toString(yyyy) + "-" + Integer.toString(mm) + "-"
-				+ Integer.toString(dd) + " 00:00:00";
+		setDay[0] = year_id + mm_id + dd_id;
 
-		try {
-			SimpleDateFormat format = new SimpleDateFormat(
-					"yyyy-MM-dd HH:mm:ss");
-			Date date = format.parse(birth);
+		for (int i = 1; i <= 2; i++) {
+			birth = Integer.toString(yyyy) + "-" + Integer.toString(mm) + "-"
+					+ Integer.toString(dd + i) + " 00:00:00";
 
-			Time times = new Time();
-			times.timezone = TimeZone.getDefault().getDisplayName();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat(
+						"yyyy-MM-dd HH:mm:ss");
+				Date date = format.parse(birth);
 
-			times.set(date.getTime());
-			time = times.normalize(true);
-		} catch (Exception e) {
-			e.printStackTrace();
+				Time times = new Time();
+				times.timezone = TimeZone.getDefault().getDisplayName();
+
+				times.set(date.getTime());
+				time = times.normalize(true);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			setDay[i] = Long.toString(time);
 		}
-		return time;
+
+		return setDay;
 	}
 }
