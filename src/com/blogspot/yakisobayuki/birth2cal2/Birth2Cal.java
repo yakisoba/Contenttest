@@ -19,6 +19,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -171,8 +172,19 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean ret = super.onCreateOptionsMenu(menu);
+
+		// 今日の日付取得
+		final Calendar calendar = Calendar.getInstance();
+		final int month = calendar.get(Calendar.MONTH);
+		final int day = calendar.get(Calendar.DAY_OF_MONTH);
+
 		menu.add(0, Menu.FIRST, Menu.NONE, "カレンダー選択");
 		menu.add(0, Menu.FIRST + 1, Menu.NONE, "繰り返し年数設定");
+
+		// おちゃめ機能
+		if (month == 11 && day == 1) {
+			menu.add(0, Menu.FIRST + 2, Menu.NONE, "about");
+		}
 		return ret;
 	}
 
@@ -182,16 +194,16 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 		switch (item.getItemId()) {
 		case 1:
-			/* カレンダーのリストを作成する */
+			// カレンダーのリストを作成する
 			CalendarList();
 
-			/* プリファレンスでデータを取得 */
+			// プリファレンスでデータを取得
 			SharedPreferences pref = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
-			int button_id = Integer.parseInt(pref.getString(
-					"calendar_list_num", "-1"));
+			int button_id = pref.getInt("calendar_list_num", -1);
 			String cal_name = pref.getString("calendar_list_name", "");
 
+			// 以前のボタン名とボタン番号の整合性確認。合っていない場合は未選択状態にする。
 			if (button_id >= 0) {
 				if (cal_name.equals(mCalendar_list[button_id])) {
 				} else {
@@ -199,6 +211,10 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				}
 			}
 
+			// 選択するカレンダーを明示的に初期化
+			mButton = button_id;
+
+			// ダイアログの表示
 			new AlertDialog.Builder(this)
 					.setTitle("カレンダー選択")
 					.setSingleChoiceItems(mCalendar_list, button_id,
@@ -215,14 +231,14 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 									new AlertDialog.Builder(Birth2Cal.this);
 									result = mCalendar_ID[mButton];
 
+									// 選択したボタンの名称と番号をプリファレンスで保存。
 									SharedPreferences pref = getSharedPreferences(
 											"cal_list", MODE_PRIVATE);
 									Editor e = pref.edit();
 									e.putString("calendar_list_name",
 											mCalendar_list[mButton]);
-									e.putString("calendar_list_num",
-											Integer.toString(mButton));
 									e.putString("calendar_list_id", result);
+									e.putInt("calendar_list_num", mButton);
 									e.commit();
 
 								}
@@ -237,20 +253,22 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			break;
 
 		case 2:
+			// 登録年数のリスト作成
 			final String[] check_year = { "1", "2", "3", "4", "5", "6", "7",
 					"8", "9", "10", "11", "12", "13", "14", "15", "期間なし" };
 
+			// プリファレンスでデータを取得
 			SharedPreferences prefr = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
-			String year_id = prefr.getString("calendar_year", "1");
-			if (year_id.equals("期間なし")) {
-				year_id = "16";
-			}
+			int year_id = prefr.getInt("calendar_year", 1);
 
+			// 選択するカレンダーを明示的に初期化
+			mButton_y = year_id - 1;
+
+			// ダイアログの表示
 			new AlertDialog.Builder(this)
 					.setTitle("登録年数選択")
-					.setSingleChoiceItems(check_year,
-							Integer.parseInt(year_id) - 1,
+					.setSingleChoiceItems(check_year, year_id - 1,
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int which) {
@@ -263,11 +281,11 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 										int whichButton) {
 									new AlertDialog.Builder(Birth2Cal.this);
 
+									// 選択したボタンの名称をプリファレンスで保存
 									SharedPreferences pref = getSharedPreferences(
 											"cal_list", MODE_PRIVATE);
 									Editor e = pref.edit();
-									e.putString("calendar_year",
-											check_year[mButton_y]);
+									e.putInt("calendar_year", mButton_y + 1);
 									e.commit();
 								}
 							})
@@ -279,22 +297,46 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 								}
 							}).show();
 			break;
+
+		// おちゃめ機能　１２月１日だけ表示される
+		case 3:
+			// カレンダー選択を行っていなかったときアラームダイアログを表示する
+			ViewGroup alert = (ViewGroup) findViewById(R.id.yaki_birthday);
+			View layout = getLayoutInflater().inflate(R.layout.yaki, alert);
+
+			// layoutで記載したviewをダイアログに設定する
+			AlertDialog.Builder dlg;
+			dlg = new AlertDialog.Builder(Birth2Cal.this);
+			dlg.setView(layout);
+			dlg.setPositiveButton("OK", null);
+			dlg.show();
 		}
 		return ret;
 	}
 
-	/* カレンダーのリストの作成 */
+	// カレンダーのリストの作成
 	public void CalendarList() {
 		mCalendar_list = null;
 		mCalendar_ID = null;
 
-		final String[] projection = new String[] { "_id", "displayName" };
-		final Uri calendars = Uri
-				.parse("content://com.android.calendar/calendars");
+		String AUTHORITY = null;
 
+		// SDKバージョンでURIの記述を変更
+		final int sdkVersion = Build.VERSION.SDK_INT;
+		if (sdkVersion < 8) {
+			AUTHORITY = "calendar";
+		} else {
+			AUTHORITY = "com.android.calendar";
+		}
+
+		final Uri calendars = Uri
+				.parse("content://" + AUTHORITY + "/calendars");
+
+		final String[] projection = new String[] { "_id", "displayName" };
 		final Cursor clist = managedQuery(calendars, projection,
 				"access_level = 700", null, null);
 
+		// 生成して、リストの数分String型の要素数を持つように指示
 		CalendarList item = new CalendarList();
 		item.setCalendarList(clist.getCount());
 
@@ -304,11 +346,11 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 				while (clist.moveToNext()) {
 
+					// カレンダー名とIDを格納
 					String calendar = clist.getString(clist
 							.getColumnIndex("displayName"));
 					String calendarId = clist.getString(clist
 							.getColumnIndex("_id"));
-
 					item.setCalendarName(calendar, count);
 					item.setCalendarId(calendarId, count);
 
@@ -362,6 +404,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 					image.setImageResource(R.drawable.star);
 				}
 
+				// CheckBoxをチェックしたときの動作
 				chk01.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
 						if (chk01.isChecked() == true) {
@@ -387,6 +430,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		String selection = Data.MIMETYPE + "=?";
 		String[] selectionArgs = new String[] { StructuredName.CONTENT_ITEM_TYPE };
 
+		// まずStructuredNameからユーザ名のふりがなを取得しソート
 		Cursor c1 = managedQuery(uri, projection, selection, selectionArgs,
 				StructuredName.PHONETIC_FAMILY_NAME + " ASC ,"
 						+ StructuredName.PHONETIC_GIVEN_NAME + " ASC");
@@ -404,6 +448,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 							String.valueOf(Event.TYPE_ANNIVERSARY),
 							String.valueOf(Event.TYPE_BIRTHDAY) };
 
+					// ふりがなソートしたデータを利用して誕生日と記念日のデータを出力する
 					Cursor c3 = managedQuery(
 							uri,
 							new String[] { Event.CONTACT_ID,
@@ -419,13 +464,13 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 					if (c3 != null) {
 						try {
 							while (c3.moveToNext()) {
+								// コンタクトユーザのリストを作成
 								ContactsStatus item = new ContactsStatus();
 
 								String displayName = c3.getString(c3
 										.getColumnIndex(Event.DISPLAY_NAME));
 								String date = c3.getString(c3
 										.getColumnIndex(Event.DATA));
-
 								String daykind = c3.getString(c3
 										.getColumnIndex(Event.TYPE));
 
@@ -454,33 +499,48 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 	@Override
 	public void onClick(View v) {
+
+		// 全てチェックのCheckBoxを叩いた処理
 		if (v == check_full) {
 			if (check_full.isChecked() == true) {
+				// リストの分だけCheckBoxをONに
 				for (ContactsStatus status : mList) {
 					status.setCheckFlag(true);
 				}
+				// CheckBoxのテキストを変更
 				CheckBox b = (CheckBox) v;
 				b.setText("チェック解除");
+
 			} else if (check_full.isChecked() == false) {
+				// リストの分だけCheckBoxをOFFに
 				for (ContactsStatus status : mList) {
 					status.setCheckFlag(false);
 				}
+
+				// CheckBoxのテキストを変更
 				CheckBox b = (CheckBox) v;
 				b.setText("全てチェック");
 			}
 			mAdapter.notifyDataSetChanged();
 
+			// カレンダーに登録のボタンを押した処理
 		} else if (v == button_import) {
 
+			// プリファレンスから登録するカレンダーを取得する
 			SharedPreferences pref = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
-			String calId = pref.getString("calendar_list_id", "");
+			int calId = Integer.parseInt(pref
+					.getString("calendar_list_id", "0"));
 
-			if (calId.equals("")) {
+			Log.d("Testoutput", Integer.toString(calId));
+
+			if (calId == 0) {
+				// カレンダー選択を行っていなかったときアラームダイアログを表示する
 				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nocalendar);
 				View layout = getLayoutInflater().inflate(R.layout.nocalendar,
 						alert);
 
+				// layoutで記載したviewをダイアログに設定する
 				AlertDialog.Builder dlg;
 				dlg = new AlertDialog.Builder(Birth2Cal.this);
 				dlg.setTitle("error!!");
@@ -488,6 +548,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				dlg.setPositiveButton("OK", null);
 				dlg.show();
 			} else {
+				// 問題がなければプログレスダイアログを表示し、別スレッドで処理
 				prg = new ProgressDialog(this);
 				prg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 				prg.setMessage("カレンダーに登録中です...");
@@ -501,35 +562,41 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		}
 	}
 
+	// カレンダー登録中の処理
 	private Runnable runnable = new Runnable() {
 		@Override
 		public void run() {
 
-			int Completion_count = 0;
+			int Chk_count = 0; // CheckBoxがONのカウント
 
+			// プリファレンスからカレンダーIDを取得
 			SharedPreferences pref = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
-			String calId = pref.getString("calendar_list_id", "");
+			int calId = Integer.parseInt(pref
+					.getString("calendar_list_id", "0"));
 
-			if (Integer.parseInt(calId) != 0) {
+			if (calId != 0) {
 
+				// チェックが付いている分だけカレンダー登録実施
 				for (ContactsStatus status : mList) {
 					if (status.getCheckFlag() == true) {
 
 						CreateEvent(status.getBirth(), status.getDisplayName(),
-								status.getDayKind(), Integer.parseInt(calId));
+								status.getDayKind(), calId);
 
-						Completion_count++;
+						Chk_count++;
 					}
 				}
 			}
 
+			// 他の処理を呼出し
 			Message message = new Message();
 			Bundle bundle = new Bundle();
-			bundle.putString("complete", Integer.toString(Completion_count));
+			bundle.putString("complete", Integer.toString(Chk_count));
 			message.setData(bundle);
 			handler.sendMessage(message);
 
+			// プログレスダイアログ終了
 			prg.dismiss();
 		}
 	};
@@ -537,13 +604,15 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	private final Handler handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			String complete = msg.getData().get("complete").toString();
+			int Chk_count = Integer.parseInt(msg.getData().get("complete")
+					.toString());
 
 			AlertDialog.Builder dlg;
 			dlg = new AlertDialog.Builder(Birth2Cal.this);
 			dlg.setPositiveButton("OK", null);
 
-			if (Integer.parseInt(complete) == 0) {
+			if (Chk_count == 0) {
+				// CheckBoxにチェックがなければアラートダイアログ表示
 				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nochek);
 				View layout = getLayoutInflater().inflate(R.layout.nocheck,
 						alert);
@@ -551,6 +620,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				dlg.setTitle("error!!");
 				dlg.setView(layout);
 			} else {
+				// アラーとダイアログでカレンダー登録完了の表示
 				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_complete);
 				View layout = getLayoutInflater().inflate(
 						R.layout.com_calendar, alert);
@@ -562,26 +632,29 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		}
 	};
 
+	// カレンダー登録
 	private void CreateEvent(String birthday, String ContactName,
 			String daykind, int calId) {
 		long startLongDay, endLongDay;
 		String rrule;
 		int eventcheck = 0;
+		String titl, dtst, id = null;
 
+		// プリファレンスから繰り返し年数を取得
 		SharedPreferences prefr = getSharedPreferences("cal_list", MODE_PRIVATE);
-		String year_id = prefr.getString("calendar_year", "1");
-		if (year_id.equals("期間なし")) {
-			year_id = "16";
-		}
+		int year_id = prefr.getInt("calendar_year", 1);
 
+		// [0]：rrule に使用する繰返し年数の登録最終年
+		// [1]：dtstart に使用する開始時間 Long型
+		// [2]：dtend に使用する終了時間 Long型
 		String[] str = { "", "", "" };
 		str = getLongDay(birthday, year_id);
 
-		Log.d("Testoutput", str[0] + " " + str[1] + " " + str[2]);
+		// Log.d("Testoutput", str[0] + " " + str[1] + " " + str[2]);
 		startLongDay = Long.valueOf(str[1]);
 		endLongDay = Long.valueOf(str[2]);
 
-		if (year_id.equals("16")) {
+		if (year_id == 16) {
 			rrule = "FREQ=YEARLY";
 		} else {
 			rrule = "FREQ=YEARLY;UNTIL=" + str[0] + "T010000Z";
@@ -591,24 +664,36 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		long day_check = startLongDay - (tz.getRawOffset() / 60) * 100;
 		// long day_check = startLongDay - tz.getRawOffset();
 
-		Uri events = Uri.parse("content://com.android.calendar/events");
+		String AUTHORITY = null;
+
+		// SDKバージョンでURIの記述を変更
+		final int sdkVersion = Build.VERSION.SDK_INT;
+		if (sdkVersion < 8) {
+			AUTHORITY = "calendar";
+		} else {
+			AUTHORITY = "com.android.calendar";
+		}
+
+		// 既に同じ情報を登録してあるか確認
+		Uri events = Uri.parse("content://" + AUTHORITY + "/events");
 		String[] projection = new String[] { "title", "dtstart", "_id" };
 		Cursor cevent = managedQuery(events, projection, "calendar_id ="
 				+ calId + " AND dtstart =" + day_check, null, null);
 
-		String titl, dtst, id = null;
 		while (cevent.moveToNext()) {
+			// タイトルと開始時間を格納
 			titl = cevent.getString(cevent.getColumnIndex("title"));
 			dtst = cevent.getString(cevent.getColumnIndex("dtstart"));
 
-			Log.d("Testoutput", "dt:" + dtst + " ch:" + day_check);
-			Log.d("Testoutput", "ti:" + titl + " cd:" + ContactName + " "
-					+ daykind);
+			// Log.d("Testoutput", "dt:" + dtst + " ch:" + day_check);
+			// Log.d("Testoutput", "ti:" + titl + " cd:" + ContactName + " "+
+			// daykind);
 
+			// 開始時間とタイトルが一致するイベントがあればidを取得
 			if (dtst.equals(Long.toString(day_check))
 					&& titl.equals(ContactName + " " + daykind)) {
 				id = cevent.getString(cevent.getColumnIndex("_id"));
-				Log.d("Testoutput", ContactName + "の誕生日は登録済み" + id);
+				// Log.d("Testoutput", ContactName + "の誕生日は登録済み" + id);
 				eventcheck = 1;
 			}
 		}
@@ -616,17 +701,20 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		ContentValues values = new ContentValues();
 		ContentResolver cr = getContentResolver();
 
-		Log.d("Testoutput", "Eventcheck: " + Integer.toString(eventcheck));
-		SharedPreferences prefr_tmp = getSharedPreferences("cal_list",
-				MODE_PRIVATE);
-		String year_id_tmp = prefr_tmp.getString("calendar_year", "1");
-		String cal_name_tmp = prefr_tmp.getString("calendar_list_name", "");
+		// プレファレンスから、繰返し年数とカレンダー名を取得
+		// SharedPreferences prefr_tmp = getSharedPreferences("cal_list",
+		// MODE_PRIVATE);
+		// String year_id_tmp =
+		// Integer.toString(prefr_tmp.getInt("calendar_year",1));
+		// String cal_name_tmp = prefr_tmp.getString("calendar_list_name", "");
 
-		Log.d("Testoutput", year_id_tmp + " " + cal_name_tmp);
+		// Log.d("Testoutput", year_id_tmp + " " + cal_name_tmp);
 
 		if (eventcheck == 0) {
+			// 既存の登録がない場合
 
-			if (year_id.equals("1")) {
+			// 繰返し年数1年 = 繰返しなしの場合
+			if (year_id == 1) {
 				values.put("calendar_id", calId);
 				values.put("title", ContactName + " " + daykind);
 				values.put("allDay", 1);
@@ -634,7 +722,11 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				values.put("dtend", endLongDay);
 				values.put("eventTimezone", TimeZone.getDefault()
 						.getDisplayName());
+
+				// カレンダーへ登録
 				cr.insert(events, values);
+
+				// 繰返し年数複数年の場合
 			} else {
 				values.put("calendar_id", calId);
 				values.put("title", ContactName + " " + daykind);
@@ -645,15 +737,20 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 						.getDisplayName());
 				values.put("rrule", rrule);
 				values.put("duration", "P1D");
+
+				// カレンダーへ登録
 				cr.insert(events, values);
 			}
-			Log.d("Testoutput", "cal insert");
+			// Log.d("Testoutput", "cal insert");
 
+			// 既に登録されていた場合
 		} else if (eventcheck == 1) {
 
-			Log.d("Testoutput", year_id);
+			// 該当のイベントIDをURIに付加して処理
 			Uri pevents = Uri.withAppendedPath(events, id);
-			if (year_id.equals("1")) {
+
+			// 繰返し年数1年 = 繰返しなしの場合
+			if (year_id == 1) {
 				values.put("calendar_id", calId);
 				values.put("title", ContactName + " " + daykind);
 				values.put("allDay", 1);
@@ -661,10 +758,15 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				values.put("dtend", endLongDay);
 				values.put("eventTimezone", TimeZone.getDefault()
 						.getDisplayName());
+
+				// 既に登録されていた rrule と duration は削除
 				values.putNull("rrule");
 				values.putNull("duration");
-				Log.d("Testoutput", "year_id = 1");
+
+				// カレンダーを更新
 				cr.update(pevents, values, null, null);
+
+				// 繰返し年数複数年の場合
 			} else {
 				Log.d("Testoutput", Integer.toString(calId));
 				values.put("calendar_id", calId);
@@ -676,30 +778,38 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 						.getDisplayName());
 				values.put("rrule", rrule);
 				values.put("duration", "P1D");
-				Log.d("Testoutput", ContactName + " " + rrule);
+
+				// カレンダーを更新
 				cr.update(pevents, values, null, null);
 			}
 		}
 	}
 
-	private String[] getLongDay(String str, String year_id) {
+	// rrule、dtstar、dtendパラメータ作成
+	private String[] getLongDay(String str, int year_id) {
 		long time = 0;
 		String birth = null;
 		int yyyy = 0, mm = 0, dd = 0;
 
+		// [0]：rrule に使用する繰返し年数の登録最終年
+		// [1]：dtstart に使用する開始時間 Long型
+		// [2]：dtend に使用する終了時間 Long型
 		String[] setDay = { "", "", "" };
 
-		/* 今日の日付取得 */
+		// 今日の日付取得
 		final Calendar calendar = Calendar.getInstance();
 		final int year = calendar.get(Calendar.YEAR);
 		final int month = calendar.get(Calendar.MONTH);
 		final int day = calendar.get(Calendar.DAY_OF_MONTH);
 
 		try {
+			// 連絡帳の誕生日のフォーマットを、yyyy-MM-dd に変換
+			// しなくても上記の方だとは思うが念のため。
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 			Date date = format.parse(str);
 			birth = format.format(date);
 
+			// 年、月、日に分けInt型へキャスト
 			yyyy = Integer.parseInt(birth.substring(0, 4));
 			mm = Integer.parseInt(birth.substring(5, 7));
 			dd = Integer.parseInt(birth.substring(8, 10));
@@ -708,48 +818,46 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			e.printStackTrace();
 		}
 
-		/* 今年の誕生日が過ぎたかどうか判定 */
+		// 今年の誕生日が過ぎたかどうか判定
 		if ((month + 1 < mm) || ((month + 1 == mm) && (day <= dd))) { // 過ぎてない
 			yyyy = year;
 		} else if ((month + 1 > mm) || ((month + 1 == mm) && (day > dd))) { // 過ぎてる
 			yyyy = year + 1;
 		}
 
-		year_id = Integer.toString(yyyy + Integer.parseInt(year_id) - 1);
+		// 繰返し年数はを加算すると1年分多くなるため-1する
+		year_id = yyyy + year_id - 1;
 
-		String mm_id, dd_id;
-		
-		if (mm < 10) {
-			mm_id = "0" + Integer.toString(mm);
-		} else {
-			mm_id = Integer.toString(mm);
-		}
-		if (dd < 10) {
-			dd_id = "0" + Integer.toString(dd);
-		} else {
-			dd_id = Integer.toString(dd);
-		}
+		// [0]：rrule用に yyyymmddのフォーマットで保存
+		// String型に変更する際に、桁を2桁に合わせる
+		setDay[0] = String.format("%04d", year_id) + String.format("%02d", mm)
+				+ String.format("%02d", dd);
 
-		setDay[0] = year_id + mm_id + dd_id;
-
+		// 開始時間と、終了時間の登録
 		for (int i = 1; i <= 2; i++) {
+			// 誕生日のフォーマットを、yyyy-MM-dd HH:mm:ss に変換するために変更
+			// 日にちには、開始時間で+1日分、終了時間で+2日分のオフセットが必要
 			birth = Integer.toString(yyyy) + "-" + Integer.toString(mm) + "-"
 					+ Integer.toString(dd + i) + " 00:00:00";
 
 			try {
+				// 誕生日のフォーマットを、yyyy-MM-dd HH:mm:ss に変換
 				SimpleDateFormat format = new SimpleDateFormat(
 						"yyyy-MM-dd HH:mm:ss");
 				Date date = format.parse(birth);
 
+				// タイムゾーンを考慮して、上記のフォーマットをLong型に変換する
 				Time times = new Time();
 				times.timezone = TimeZone.getDefault().getDisplayName();
-
 				times.set(date.getTime());
 				time = times.normalize(true);
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
+			// [1]：dtstart に使用する開始時間 Long型をStringに変換し格納
+			// [2]：dtend に使用する終了時間 Long型をStringに変換し格納
 			setDay[i] = Long.toString(time);
 		}
 
