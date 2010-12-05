@@ -201,7 +201,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			// プリファレンスでデータを取得
 			SharedPreferences pref = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
-			int button_id = pref.getInt("calendar_list_num", -1);
+			int button_id = pref.getInt("calendar_list_num_v112", -1);
 			String cal_name = pref.getString("calendar_list_name", "");
 
 			// 以前のボタン名とボタン番号の整合性確認。合っていない場合は未選択状態にする。
@@ -239,7 +239,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 									e.putString("calendar_list_name",
 											mCalendar_list[mButton]);
 									e.putString("calendar_list_id", result);
-									e.putInt("calendar_list_num", mButton);
+									e.putInt("calendar_list_num_v112", mButton);
 									e.commit();
 
 								}
@@ -261,7 +261,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			// プリファレンスでデータを取得
 			SharedPreferences prefr = getSharedPreferences("cal_list",
 					MODE_PRIVATE);
-			int year_id = prefr.getInt("calendar_year", 1);
+			int year_id = prefr.getInt("calendar_year_v112", 1);
 
 			// 選択するカレンダーを明示的に初期化
 			mButton_y = year_id - 1;
@@ -286,7 +286,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 									SharedPreferences pref = getSharedPreferences(
 											"cal_list", MODE_PRIVATE);
 									Editor e = pref.edit();
-									e.putInt("calendar_year", mButton_y + 1);
+									e.putInt("calendar_year_v112", mButton_y + 1);
 									e.commit();
 								}
 							})
