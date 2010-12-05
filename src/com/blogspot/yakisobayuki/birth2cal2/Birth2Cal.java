@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import android.app.Activity;
@@ -426,7 +427,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		Uri uri = Data.CONTENT_URI;
 		String[] projection = new String[] { StructuredName.CONTACT_ID,
 				StructuredName.PHONETIC_FAMILY_NAME,
-				StructuredName.PHONETIC_GIVEN_NAME };
+				StructuredName.PHONETIC_GIVEN_NAME};
 		String selection = Data.MIMETYPE + "=?";
 		String[] selectionArgs = new String[] { StructuredName.CONTENT_ITEM_TYPE };
 
@@ -442,6 +443,11 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		if (c1 != null) {
 			try {
 				while (c1.moveToNext()) {
+
+					Log.d("Testoutput",
+							c1.getString(c1.getColumnIndex(StructuredName.CONTACT_ID)) + " "
+									+ c1.getString(c1.getColumnIndex(StructuredName.PHONETIC_FAMILY_NAME)) + " "
+									+ c1.getString(c1.getColumnIndex(StructuredName.PHONETIC_GIVEN_NAME)));
 
 					selectionArgs = new String[] { c1.getString(0),
 							Event.CONTENT_ITEM_TYPE,
@@ -471,6 +477,17 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 										.getColumnIndex(Event.DISPLAY_NAME));
 								String date = c3.getString(c3
 										.getColumnIndex(Event.DATA));
+								
+								// 誕生日に”-”を含まない場合異常になるのでフォーマット変更
+								if (date.indexOf("-") == -1) {
+
+									String date_tmp;
+									date_tmp = date.substring(0, 4) + "-"
+											+ date.substring(4, 6) + "-"
+											+ date.substring(6, 8);
+									date = date_tmp;
+								}
+
 								String daykind = c3.getString(c3
 										.getColumnIndex(Event.TYPE));
 
@@ -685,9 +702,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			titl = cevent.getString(cevent.getColumnIndex("title"));
 			dtst = cevent.getString(cevent.getColumnIndex("dtstart"));
 
-			// Log.d("Testoutput", "dt:" + dtst + " ch:" + day_check);
-			// Log.d("Testoutput", "ti:" + titl + " cd:" + ContactName + " "+
-			// daykind);
+			 Log.d("Testoutput", "dt:" + dtst + " ch:" + day_check);
+			Log.d("Testoutput", "ti:" + titl + " cd:" + ContactName + " "+daykind);
 
 			// 開始時間とタイトルが一致するイベントがあればidを取得
 			if (dtst.equals(Long.toString(day_check))
@@ -701,15 +717,6 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		ContentValues values = new ContentValues();
 		ContentResolver cr = getContentResolver();
 
-		// プレファレンスから、繰返し年数とカレンダー名を取得
-		// SharedPreferences prefr_tmp = getSharedPreferences("cal_list",
-		// MODE_PRIVATE);
-		// String year_id_tmp =
-		// Integer.toString(prefr_tmp.getInt("calendar_year",1));
-		// String cal_name_tmp = prefr_tmp.getString("calendar_list_name", "");
-
-		// Log.d("Testoutput", year_id_tmp + " " + cal_name_tmp);
-
 		if (eventcheck == 0) {
 			// 既存の登録がない場合
 
@@ -720,8 +727,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				values.put("allDay", 1);
 				values.put("dtstart", startLongDay);
 				values.put("dtend", endLongDay);
-				values.put("eventTimezone", TimeZone.getDefault()
-						.getDisplayName());
+				values.put("eventTimezone",TimeZone.getDefault().getDisplayName(Locale.ENGLISH)); 
 
 				// カレンダーへ登録
 				cr.insert(events, values);
@@ -734,12 +740,13 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				values.put("dtstart", startLongDay);
 				values.put("dtend", endLongDay);
 				values.put("eventTimezone", TimeZone.getDefault()
-						.getDisplayName());
+						.getDisplayName(Locale.ENGLISH));
 				values.put("rrule", rrule);
 				values.put("duration", "P1D");
 
 				// カレンダーへ登録
 				cr.insert(events, values);
+			    cr.update(events, values, null, null); 
 			}
 			// Log.d("Testoutput", "cal insert");
 
@@ -757,7 +764,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				values.put("dtstart", startLongDay);
 				values.put("dtend", endLongDay);
 				values.put("eventTimezone", TimeZone.getDefault()
-						.getDisplayName());
+						.getDisplayName(Locale.ENGLISH));
 
 				// 既に登録されていた rrule と duration は削除
 				values.putNull("rrule");
@@ -775,7 +782,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				values.put("dtstart", startLongDay);
 				values.put("dtend", endLongDay);
 				values.put("eventTimezone", TimeZone.getDefault()
-						.getDisplayName());
+						.getDisplayName(Locale.ENGLISH));
 				values.put("rrule", rrule);
 				values.put("duration", "P1D");
 
@@ -848,7 +855,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 				// タイムゾーンを考慮して、上記のフォーマットをLong型に変換する
 				Time times = new Time();
-				times.timezone = TimeZone.getDefault().getDisplayName();
+				times.timezone = TimeZone.getDefault().getDisplayName(Locale.ENGLISH);
 				times.set(date.getTime());
 				time = times.normalize(true);
 
