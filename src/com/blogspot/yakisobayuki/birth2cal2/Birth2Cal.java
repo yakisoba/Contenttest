@@ -44,6 +44,8 @@ import android.widget.TextView;
 
 public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	/** Called when the activity is first created. */
+	final Boolean logstatus = false;
+
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
 	ListView listView;
@@ -286,7 +288,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 									SharedPreferences pref = getSharedPreferences(
 											"cal_list", MODE_PRIVATE);
 									Editor e = pref.edit();
-									e.putInt("calendar_year_v112", mButton_y + 1);
+									e.putInt("calendar_year_v112",
+											mButton_y + 1);
 									e.commit();
 								}
 							})
@@ -425,6 +428,9 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		this.mList = new ArrayList<ContactsStatus>();
 
 		Uri uri = Data.CONTENT_URI;
+//		String[] projection = new String[] { StructuredName.CONTACT_ID,
+//				StructuredName.PHONETIC_FAMILY_NAME,
+//				StructuredName.PHONETIC_GIVEN_NAME };
 		String[] projection = new String[] { StructuredName.CONTACT_ID,
 				StructuredName.PHONETIC_FAMILY_NAME,
 				StructuredName.PHONETIC_GIVEN_NAME};
@@ -444,21 +450,16 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			try {
 				while (c1.moveToNext()) {
 
-					Log.d("Testoutput",
-							c1.getString(c1.getColumnIndex(StructuredName.CONTACT_ID)) + " "
-									+ c1.getString(c1.getColumnIndex(StructuredName.PHONETIC_FAMILY_NAME)) + " "
-									+ c1.getString(c1.getColumnIndex(StructuredName.PHONETIC_GIVEN_NAME)));
-
-					selectionArgs = new String[] { c1.getString(0),
+					selectionArgs = new String[] { c1.getString(c1.getColumnIndex(StructuredName.CONTACT_ID)),
 							Event.CONTENT_ITEM_TYPE,
 							String.valueOf(Event.TYPE_ANNIVERSARY),
-							String.valueOf(Event.TYPE_BIRTHDAY) };
+							String.valueOf(Event.TYPE_BIRTHDAY)};
 
 					// ふりがなソートしたデータを利用して誕生日と記念日のデータを出力する
 					Cursor c3 = managedQuery(
 							uri,
 							new String[] { Event.CONTACT_ID,
-									Event.DISPLAY_NAME, Event.TYPE, Event.DATA },
+									Event.DISPLAY_NAME, Event.TYPE, Event.DATA ,Event.DATA_VERSION},
 							Data.CONTACT_ID + "=? AND " + Data.MIMETYPE
 									+ "=? AND (" + Event.TYPE + "=? OR "
 									+ Event.TYPE + "=? )",
@@ -477,7 +478,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 										.getColumnIndex(Event.DISPLAY_NAME));
 								String date = c3.getString(c3
 										.getColumnIndex(Event.DATA));
-								
+
 								// 誕生日に”-”を含まない場合異常になるのでフォーマット変更
 								if (date.indexOf("-") == -1) {
 
@@ -549,8 +550,9 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			int calId = Integer.parseInt(pref
 					.getString("calendar_list_id", "0"));
 
-			Log.d("Testoutput", Integer.toString(calId));
-
+			if (logstatus == true) {
+				Log.d("birth2cal", Integer.toString(calId));
+			}
 			if (calId == 0) {
 				// カレンダー選択を行っていなかったときアラームダイアログを表示する
 				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nocalendar);
@@ -659,7 +661,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 		// プリファレンスから繰り返し年数を取得
 		SharedPreferences prefr = getSharedPreferences("cal_list", MODE_PRIVATE);
-		int year_id = prefr.getInt("calendar_year", 1);
+		int year_id = prefr.getInt("calendar_year_v112", 1);
 
 		// [0]：rrule に使用する繰返し年数の登録最終年
 		// [1]：dtstart に使用する開始時間 Long型
@@ -667,7 +669,9 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		String[] str = { "", "", "" };
 		str = getLongDay(birthday, year_id);
 
-		// Log.d("Testoutput", str[0] + " " + str[1] + " " + str[2]);
+		if (logstatus == true) {
+			Log.d("birth2cal", str[0] + " " + str[1] + " " + str[2]);
+		}
 		startLongDay = Long.valueOf(str[1]);
 		endLongDay = Long.valueOf(str[2]);
 
@@ -678,8 +682,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		}
 
 		TimeZone tz = TimeZone.getDefault();
-		long day_check = startLongDay - (tz.getRawOffset() / 60) * 100;
-		// long day_check = startLongDay - tz.getRawOffset();
+		long day_check = startLongDay;
 
 		String AUTHORITY = null;
 
@@ -694,22 +697,24 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		// 既に同じ情報を登録してあるか確認
 		Uri events = Uri.parse("content://" + AUTHORITY + "/events");
 		String[] projection = new String[] { "title", "dtstart", "_id" };
+//		Cursor cevent = managedQuery(events, projection, null, null, null);
 		Cursor cevent = managedQuery(events, projection, "calendar_id ="
-				+ calId + " AND dtstart =" + day_check, null, null);
+		+ calId + " AND dtstart =" + day_check, null, null);
 
 		while (cevent.moveToNext()) {
 			// タイトルと開始時間を格納
 			titl = cevent.getString(cevent.getColumnIndex("title"));
 			dtst = cevent.getString(cevent.getColumnIndex("dtstart"));
 
-			 Log.d("Testoutput", "dt:" + dtst + " ch:" + day_check);
-			Log.d("Testoutput", "ti:" + titl + " cd:" + ContactName + " "+daykind);
-
+			if (logstatus == true) {
+				Log.d("birth2cal", "dt:" + dtst + " ch:" + day_check);
+				Log.d("birth2cal", "ti:" + titl + " cd:" + ContactName + " "+ daykind);
+			}
+			
 			// 開始時間とタイトルが一致するイベントがあればidを取得
 			if (dtst.equals(Long.toString(day_check))
 					&& titl.equals(ContactName + " " + daykind)) {
 				id = cevent.getString(cevent.getColumnIndex("_id"));
-				// Log.d("Testoutput", ContactName + "の誕生日は登録済み" + id);
 				eventcheck = 1;
 			}
 		}
@@ -727,7 +732,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				values.put("allDay", 1);
 				values.put("dtstart", startLongDay);
 				values.put("dtend", endLongDay);
-				values.put("eventTimezone",TimeZone.getDefault().getDisplayName(Locale.ENGLISH)); 
+				values.put("eventTimezone", TimeZone.getDefault()
+						.getDisplayName(Locale.ENGLISH));
 
 				// カレンダーへ登録
 				cr.insert(events, values);
@@ -746,9 +752,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 				// カレンダーへ登録
 				cr.insert(events, values);
-			    cr.update(events, values, null, null); 
+				cr.update(events, values, null, null);
 			}
-			// Log.d("Testoutput", "cal insert");
 
 			// 既に登録されていた場合
 		} else if (eventcheck == 1) {
@@ -775,7 +780,6 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 				// 繰返し年数複数年の場合
 			} else {
-				Log.d("Testoutput", Integer.toString(calId));
 				values.put("calendar_id", calId);
 				values.put("title", ContactName + " " + daykind);
 				values.put("allDay", 1);
@@ -845,7 +849,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			// 誕生日のフォーマットを、yyyy-MM-dd HH:mm:ss に変換するために変更
 			// 日にちには、開始時間で+1日分、終了時間で+2日分のオフセットが必要
 			birth = Integer.toString(yyyy) + "-" + Integer.toString(mm) + "-"
-					+ Integer.toString(dd + i) + " 00:00:00";
+					+ Integer.toString(dd + i-1) + " 09:00:00";
 
 			try {
 				// 誕生日のフォーマットを、yyyy-MM-dd HH:mm:ss に変換
@@ -855,7 +859,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 				// タイムゾーンを考慮して、上記のフォーマットをLong型に変換する
 				Time times = new Time();
-				times.timezone = TimeZone.getDefault().getDisplayName(Locale.ENGLISH);
+				times.timezone = TimeZone.getDefault().getDisplayName(
+						Locale.ENGLISH);
 				times.set(date.getTime());
 				time = times.normalize(true);
 
