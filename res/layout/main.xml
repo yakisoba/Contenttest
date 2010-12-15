@@ -7,11 +7,14 @@
 		android:layout_width="fill_parent" android:layout_height="wrap_content">
 		<CheckBox android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:id="@+id/CheckBox_full"
-			android:text="全てチェック" android:width="160dp"></CheckBox>
+			android:text="全てチェック" android:width="160dp" android:layout_weight="75"></CheckBox>
 		<Button android:text="カレンダーに登録" android:id="@+id/button_import"
-			android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+			android:layout_width="wrap_content" android:layout_height="wrap_content" 
+			android:layout_weight="25"></Button>
 	</LinearLayout>
 
-	<ListView android:id="@+id/list" android:layout_width="wrap_content"
-		android:layout_height="wrap_content"></ListView>
+	<GridView android:id="@+id/list" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:numColumns="1"
+		android:stretchMode="columnWidth"
+		android:gravity="center" />
 </LinearLayout>

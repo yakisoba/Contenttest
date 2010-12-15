@@ -6,11 +6,19 @@
 		android:layout_height="wrap_content" android:id="@+id/CheckBox1"></CheckBox>
 
 	<LinearLayout android:orientation="vertical"
-		android:layout_height="wrap_content" android:layout_width="wrap_content">
+		android:layout_height="wrap_content" android:layout_width="fill_parent">
 
-		<TextView android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:id="@+id/ContactsName1"
-			android:text="ContactsName" android:textSize="20sp" android:width="200sp" />
+		<LinearLayout android:orientation="horizontal"
+			android:layout_height="wrap_content" android:layout_width="fill_parent">
+
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:id="@+id/ContactsName1"
+				android:text="ContactsName" android:textSize="20sp" />
+			<TextView android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:id="@+id/Age1"
+				android:text="Age" android:textSize="20sp" android:gravity="right"
+				android:layout_marginRight="30sp" />
+		</LinearLayout>
 
 		<LinearLayout android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:id="@+id/LinearLayout1">

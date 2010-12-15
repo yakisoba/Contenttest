@@ -38,8 +38,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.ListView;
+//import android.widget.ListView;
 import android.widget.TextView;
 
 public class Birth2Cal extends Activity implements Runnable, OnClickListener {
@@ -48,7 +49,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
-	ListView listView;
+	// ListView listView;
+	GridView gridView;
 
 	String[] mCalendar_list;
 	String[] mCalendar_ID;
@@ -65,6 +67,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		private String displayName;
 		private String daykind;
 		private String birthday;
+		private String age;
 		private boolean checkflg;
 
 		public String getDisplayName() {
@@ -89,6 +92,14 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 		public void setBirth(String birthday) {
 			this.birthday = birthday;
+		}
+
+		public String getAge() {
+			return age;
+		}
+
+		public void setAge(String age) {
+			this.age = age;
 		}
 
 		public boolean getCheckFlag() {
@@ -130,7 +141,8 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
-		listView = (ListView) findViewById(R.id.list);
+		// listView = (ListView) findViewById(R.id.list);
+		gridView = (GridView) findViewById(R.id.list);
 
 		readDialog();
 
@@ -169,7 +181,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		public void handleMessage(Message msg) {
 			mAdapter = new ContactAdapter(Birth2Cal.this, R.layout.listview,
 					mList);
-			listView.setAdapter(mAdapter);
+			gridView.setAdapter(mAdapter);
 		}
 	};
 
@@ -394,6 +406,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				TextView daykind = (TextView) view.findViewById(R.id.DayKind1);
 				TextView birthday = (TextView) view
 						.findViewById(R.id.Birthday1);
+				TextView age = (TextView) view.findViewById(R.id.Age1);
 				final CheckBox chk01 = (CheckBox) view
 						.findViewById(R.id.CheckBox1);
 				ImageView image = (ImageView) view.findViewById(R.id.Image1);
@@ -407,6 +420,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				} else {
 					image.setImageResource(R.drawable.star);
 				}
+				age.setText(item.getAge());
 
 				// CheckBoxをチェックしたときの動作
 				chk01.setOnClickListener(new OnClickListener() {
@@ -428,12 +442,9 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		this.mList = new ArrayList<ContactsStatus>();
 
 		Uri uri = Data.CONTENT_URI;
-//		String[] projection = new String[] { StructuredName.CONTACT_ID,
-//				StructuredName.PHONETIC_FAMILY_NAME,
-//				StructuredName.PHONETIC_GIVEN_NAME };
 		String[] projection = new String[] { StructuredName.CONTACT_ID,
 				StructuredName.PHONETIC_FAMILY_NAME,
-				StructuredName.PHONETIC_GIVEN_NAME};
+				StructuredName.PHONETIC_GIVEN_NAME };
 		String selection = Data.MIMETYPE + "=?";
 		String[] selectionArgs = new String[] { StructuredName.CONTENT_ITEM_TYPE };
 
@@ -450,16 +461,19 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			try {
 				while (c1.moveToNext()) {
 
-					selectionArgs = new String[] { c1.getString(c1.getColumnIndex(StructuredName.CONTACT_ID)),
+					selectionArgs = new String[] {
+							c1.getString(c1
+									.getColumnIndex(StructuredName.CONTACT_ID)),
 							Event.CONTENT_ITEM_TYPE,
 							String.valueOf(Event.TYPE_ANNIVERSARY),
-							String.valueOf(Event.TYPE_BIRTHDAY)};
+							String.valueOf(Event.TYPE_BIRTHDAY) };
 
 					// ふりがなソートしたデータを利用して誕生日と記念日のデータを出力する
 					Cursor c3 = managedQuery(
 							uri,
 							new String[] { Event.CONTACT_ID,
-									Event.DISPLAY_NAME, Event.TYPE, Event.DATA ,Event.DATA_VERSION},
+									Event.DISPLAY_NAME, Event.TYPE, Event.DATA,
+									Event.DATA_VERSION },
 							Data.CONTACT_ID + "=? AND " + Data.MIMETYPE
 									+ "=? AND (" + Event.TYPE + "=? OR "
 									+ Event.TYPE + "=? )",
@@ -498,9 +512,35 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 									daykind = "誕生日";
 								}
 
+								// 今日の日付取得
+								final Calendar calendar = Calendar
+										.getInstance();
+								final int year = calendar.get(Calendar.YEAR);
+								final int month = calendar.get(Calendar.MONTH);
+								final int day = calendar
+										.get(Calendar.DAY_OF_MONTH);
+
+								// 今年の誕生日が過ぎたかどうか判定
+								String age = null;
+								int yyyy, mm, dd;
+								// 年、月、日に分けInt型へキャスト
+								yyyy = Integer.parseInt(date.substring(0, 4));
+								mm = Integer.parseInt(date.substring(5, 7));
+								dd = Integer.parseInt(date.substring(8, 10));
+
+								if ((month + 1 < mm)
+										|| ((month + 1 == mm) && (day <= dd))) { // 過ぎてない
+									age = Integer.toString(year - yyyy - 1);
+								} else if ((month + 1 > mm)
+										|| ((month + 1 == mm) && (day > dd))) { // 過ぎてる
+									age = Integer.toString(year - yyyy);
+								}
+
 								item.setDisplayName(displayName);
 								item.setDayKind(daykind);
 								item.setBirth(date);
+								item.setAge(age);
+
 								mList.add(item);
 							}
 						} finally {
@@ -681,7 +721,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			rrule = "FREQ=YEARLY;UNTIL=" + str[0] + "T010000Z";
 		}
 
-		TimeZone tz = TimeZone.getDefault();
+		// TimeZone tz = TimeZone.getDefault();
 		long day_check = startLongDay;
 
 		String AUTHORITY = null;
@@ -697,9 +737,9 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		// 既に同じ情報を登録してあるか確認
 		Uri events = Uri.parse("content://" + AUTHORITY + "/events");
 		String[] projection = new String[] { "title", "dtstart", "_id" };
-//		Cursor cevent = managedQuery(events, projection, null, null, null);
+		// Cursor cevent = managedQuery(events, projection, null, null, null);
 		Cursor cevent = managedQuery(events, projection, "calendar_id ="
-		+ calId + " AND dtstart =" + day_check, null, null);
+				+ calId + " AND dtstart =" + day_check, null, null);
 
 		while (cevent.moveToNext()) {
 			// タイトルと開始時間を格納
@@ -708,9 +748,10 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 			if (logstatus == true) {
 				Log.d("birth2cal", "dt:" + dtst + " ch:" + day_check);
-				Log.d("birth2cal", "ti:" + titl + " cd:" + ContactName + " "+ daykind);
+				Log.d("birth2cal", "ti:" + titl + " cd:" + ContactName + " "
+						+ daykind);
 			}
-			
+
 			// 開始時間とタイトルが一致するイベントがあればidを取得
 			if (dtst.equals(Long.toString(day_check))
 					&& titl.equals(ContactName + " " + daykind)) {
@@ -849,7 +890,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 			// 誕生日のフォーマットを、yyyy-MM-dd HH:mm:ss に変換するために変更
 			// 日にちには、開始時間で+1日分、終了時間で+2日分のオフセットが必要
 			birth = Integer.toString(yyyy) + "-" + Integer.toString(mm) + "-"
-					+ Integer.toString(dd + i-1) + " 09:00:00";
+					+ Integer.toString(dd + i - 1) + " 09:00:00";
 
 			try {
 				// 誕生日のフォーマットを、yyyy-MM-dd HH:mm:ss に変換

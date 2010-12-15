@@ -17,26 +17,27 @@ public final class R {
         public static final int yaki=0x7f020003;
     }
     public static final class id {
-        public static final int Birthday1=0x7f050008;
+        public static final int Age1=0x7f050004;
+        public static final int Birthday1=0x7f050009;
         public static final int CheckBox1=0x7f050002;
-        public static final int CheckBox_full=0x7f05000b;
+        public static final int CheckBox_full=0x7f05000c;
         public static final int ContactsName1=0x7f050003;
-        public static final int DayKind1=0x7f050006;
-        public static final int Image1=0x7f050005;
+        public static final int DayKind1=0x7f050007;
+        public static final int Image1=0x7f050006;
         public static final int LinearLayout01=0x7f050001;
-        public static final int LinearLayout02=0x7f050013;
-        public static final int LinearLayout03=0x7f050011;
-        public static final int LinearLayout1=0x7f050009;
-        public static final int LinearLayoutday1=0x7f050004;
+        public static final int LinearLayout02=0x7f050014;
+        public static final int LinearLayout03=0x7f050012;
+        public static final int LinearLayout1=0x7f05000a;
+        public static final int LinearLayoutday1=0x7f050005;
         public static final int alert_complete=0x7f050000;
-        public static final int alert_nocalendar=0x7f05000e;
-        public static final int alert_nochek=0x7f05000f;
-        public static final int button_import=0x7f05000c;
-        public static final int line_button=0x7f05000a;
-        public static final int list=0x7f05000d;
-        public static final int noid1=0x7f050007;
-        public static final int yaki=0x7f050012;
-        public static final int yaki_birthday=0x7f050010;
+        public static final int alert_nocalendar=0x7f05000f;
+        public static final int alert_nochek=0x7f050010;
+        public static final int button_import=0x7f05000d;
+        public static final int line_button=0x7f05000b;
+        public static final int list=0x7f05000e;
+        public static final int noid1=0x7f050008;
+        public static final int yaki=0x7f050013;
+        public static final int yaki_birthday=0x7f050011;
     }
     public static final class layout {
         public static final int com_calendar=0x7f030000;
