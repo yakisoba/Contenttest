@@ -40,26 +40,32 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.GridView;
 import android.widget.ImageView;
-//import android.widget.ListView;
 import android.widget.TextView;
 
 public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	/** Called when the activity is first created. */
 	final Boolean logstatus = false;
 
+	// List表示用
 	private List<ContactsStatus> mList = null;
 	private ContactAdapter mAdapter = null;
-	// ListView listView;
 	GridView gridView;
 
+	// カレンダー表示用
 	String[] mCalendar_list;
 	String[] mCalendar_ID;
 	String result;
 	int mButton;
 	int mButton_y;
 
-	ProgressDialog prg;
-	CheckBox chk01;
+	// 今日の日付取得
+	final Calendar mCalendar = Calendar.getInstance();
+	final int mYear = mCalendar.get(Calendar.YEAR);
+	final int mMonth = mCalendar.get(Calendar.MONTH);
+	final int mDay = mCalendar.get(Calendar.DAY_OF_MONTH);
+
+	// 表示のアイテム
+	private ProgressDialog prg;
 	private CheckBox check_full;
 	private Button button_import;
 
@@ -141,7 +147,6 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.main);
-		// listView = (ListView) findViewById(R.id.list);
 		gridView = (GridView) findViewById(R.id.list);
 
 		readDialog();
@@ -188,16 +193,11 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean ret = super.onCreateOptionsMenu(menu);
 
-		// 今日の日付取得
-		final Calendar calendar = Calendar.getInstance();
-		final int month = calendar.get(Calendar.MONTH);
-		final int day = calendar.get(Calendar.DAY_OF_MONTH);
-
 		menu.add(0, Menu.FIRST, Menu.NONE, "カレンダー選択");
 		menu.add(0, Menu.FIRST + 1, Menu.NONE, "繰り返し年数設定");
 
 		// おちゃめ機能
-		if (month == 11 && day == 1) {
+		if (mMonth == 11 && mDay == 1) {
 			menu.add(0, Menu.FIRST + 2, Menu.NONE, "about");
 		}
 		return ret;
@@ -244,18 +244,20 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 								public void onClick(DialogInterface dialog,
 										int whichButton) {
 									new AlertDialog.Builder(Birth2Cal.this);
-									result = mCalendar_ID[mButton];
 
-									// 選択したボタンの名称と番号をプリファレンスで保存。
-									SharedPreferences pref = getSharedPreferences(
-											"cal_list", MODE_PRIVATE);
-									Editor e = pref.edit();
-									e.putString("calendar_list_name",
-											mCalendar_list[mButton]);
-									e.putString("calendar_list_id", result);
-									e.putInt("calendar_list_num_v112", mButton);
-									e.commit();
-
+									if (mButton != -1) {
+										// 選択したボタンの名称と番号をプリファレンスで保存。
+										result = mCalendar_ID[mButton];
+										SharedPreferences pref = getSharedPreferences(
+												"cal_list", MODE_PRIVATE);
+										Editor e = pref.edit();
+										e.putString("calendar_list_name",
+												mCalendar_list[mButton]);
+										e.putString("calendar_list_id", result);
+										e.putInt("calendar_list_num_v112",
+												mButton);
+										e.commit();
+									}
 								}
 							})
 					.setNegativeButton("Cancel",
@@ -314,7 +316,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 							}).show();
 			break;
 
-		// おちゃめ機能　１２月１日だけ表示される
+		// おちゃめ機能 12月1日だけ表示される
 		case 3:
 			// カレンダー選択を行っていなかったときアラームダイアログを表示する
 			ViewGroup alert = (ViewGroup) findViewById(R.id.yaki_birthday);
@@ -512,28 +514,20 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 									daykind = "誕生日";
 								}
 
-								// 今日の日付取得
-								final Calendar calendar = Calendar
-										.getInstance();
-								final int year = calendar.get(Calendar.YEAR);
-								final int month = calendar.get(Calendar.MONTH);
-								final int day = calendar
-										.get(Calendar.DAY_OF_MONTH);
-
 								// 今年の誕生日が過ぎたかどうか判定
 								String age = null;
 								int yyyy, mm, dd;
-								// 年、月、日に分けInt型へキャスト
+								// 年、月、日に分けint型へキャスト
 								yyyy = Integer.parseInt(date.substring(0, 4));
 								mm = Integer.parseInt(date.substring(5, 7));
 								dd = Integer.parseInt(date.substring(8, 10));
 
-								if ((month + 1 < mm)
-										|| ((month + 1 == mm) && (day <= dd))) { // 過ぎてない
-									age = Integer.toString(year - yyyy - 1);
-								} else if ((month + 1 > mm)
-										|| ((month + 1 == mm) && (day > dd))) { // 過ぎてる
-									age = Integer.toString(year - yyyy);
+								if ((mMonth + 1 < mm)
+										|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
+									age = Integer.toString(mYear - yyyy - 1);
+								} else if ((mMonth + 1 > mm)
+										|| ((mMonth + 1 == mm) && (mDay >= dd))) { // 過ぎてる
+									age = Integer.toString(mYear - yyyy);
 								}
 
 								item.setDisplayName(displayName);
@@ -607,9 +601,18 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 				dlg.setPositiveButton("OK", null);
 				dlg.show();
 			} else {
+				int Chk_count = 0; // CheckBoxがONのカウント
+
+				for (ContactsStatus status : mList) {
+					if (status.getCheckFlag() == true) {
+						Chk_count++;
+					}
+				}
+
 				// 問題がなければプログレスダイアログを表示し、別スレッドで処理
 				prg = new ProgressDialog(this);
-				prg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				prg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				prg.setMax(Chk_count);
 				prg.setMessage("カレンダーに登録中です...");
 				prg.setCancelable(true);
 				prg.show();
@@ -644,6 +647,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 								status.getDayKind(), calId);
 
 						Chk_count++;
+						prg.setProgress(Chk_count);
 					}
 				}
 			}
@@ -737,7 +741,6 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		// 既に同じ情報を登録してあるか確認
 		Uri events = Uri.parse("content://" + AUTHORITY + "/events");
 		String[] projection = new String[] { "title", "dtstart", "_id" };
-		// Cursor cevent = managedQuery(events, projection, null, null, null);
 		Cursor cevent = managedQuery(events, projection, "calendar_id ="
 				+ calId + " AND dtstart =" + day_check, null, null);
 
@@ -793,7 +796,7 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 
 				// カレンダーへ登録
 				cr.insert(events, values);
-				cr.update(events, values, null, null);
+				// cr.update(events, values, null, null);
 			}
 
 			// 既に登録されていた場合
@@ -848,12 +851,6 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		// [2]：dtend に使用する終了時間 Long型
 		String[] setDay = { "", "", "" };
 
-		// 今日の日付取得
-		final Calendar calendar = Calendar.getInstance();
-		final int year = calendar.get(Calendar.YEAR);
-		final int month = calendar.get(Calendar.MONTH);
-		final int day = calendar.get(Calendar.DAY_OF_MONTH);
-
 		try {
 			// 連絡帳の誕生日のフォーマットを、yyyy-MM-dd に変換
 			// しなくても上記の方だとは思うが念のため。
@@ -871,10 +868,10 @@ public class Birth2Cal extends Activity implements Runnable, OnClickListener {
 		}
 
 		// 今年の誕生日が過ぎたかどうか判定
-		if ((month + 1 < mm) || ((month + 1 == mm) && (day <= dd))) { // 過ぎてない
-			yyyy = year;
-		} else if ((month + 1 > mm) || ((month + 1 == mm) && (day > dd))) { // 過ぎてる
-			yyyy = year + 1;
+		if ((mMonth + 1 < mm) || ((mMonth + 1 == mm) && (mDay <= dd))) { // 過ぎてない
+			yyyy = mYear;
+		} else if ((mMonth + 1 > mm) || ((mMonth + 1 == mm) && (mDay > dd))) { // 過ぎてる
+			yyyy = mYear + 1;
 		}
 
 		// 繰返し年数はを加算すると1年分多くなるため-1する
