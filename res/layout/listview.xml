@@ -14,11 +14,18 @@
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:id="@+id/ContactsName1"
 				android:text="ContactsName" android:textSize="20sp"
-				android:maxWidth="200sp" android:maxLines="1" />
+				android:layout_weight="94" android:maxLines="1" 
+				android:maxWidth="94sp"/>
 
-			<TextView android:layout_width="fill_parent"
+			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:id="@+id/Age1"
-				android:text="Age" android:textSize="20sp" android:gravity="right" />
+				android:text="Age" android:textSize="20sp"
+				android:layout_weight="5" android:maxLines="1"/>
+
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:id="@+id/Age2"
+				android:text="年" android:textSize="11sp"
+				android:layout_marginRight="10sp" android:layout_weight="1"/>
 
 		</LinearLayout>
 
