@@ -1,5 +1,7 @@
 package com.blogspot.yakisobayuki.birth2cal2;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -232,47 +234,128 @@ public class TabAge extends Activity implements Runnable, OnClickListener {
 							.getColumnIndex(Event.DISPLAY_NAME));
 					String date = c3.getString(c3.getColumnIndex(Event.DATA));
 
-					// 誕生日に”-”を含まない場合異常になるのでフォーマット変更
-					if (date.indexOf("-") == -1) {
+					String date_tmp = DateCheck(date);
+					if (date_tmp != null) {
+						String daykind = c3.getString(c3
+								.getColumnIndex(Event.TYPE));
 
-						String date_tmp;
-						date_tmp = date.substring(0, 4) + "-"
-								+ date.substring(4, 6) + "-"
-								+ date.substring(6, 8);
-						date = date_tmp;
+						if (Integer.parseInt(daykind) == 1) {
+							daykind = "記念日";
+						} else if (Integer.parseInt(daykind) == 3) {
+							daykind = "誕生日";
+						}
+
+						// 今年の誕生日が過ぎたかどうか判定
+						String age = null;
+						int yyyy, mm, dd;
+						// 年、月、日に分けint型へキャスト
+						yyyy = Integer.parseInt(date.substring(0, 4));
+						mm = Integer.parseInt(date.substring(5, 7));
+						dd = Integer.parseInt(date.substring(8, 10));
+
+						if ((mMonth + 1 < mm)
+								|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
+							age = Integer.toString(mYear - yyyy - 1);
+						} else if ((mMonth + 1 > mm)
+								|| ((mMonth + 1 == mm) && (mDay >= dd))) { // 過ぎてる
+							age = Integer.toString(mYear - yyyy);
+						}
+
+						item.setParam(displayName, daykind, date, age);
+						mList.add(item);
 					}
-
-					String daykind = c3
-							.getString(c3.getColumnIndex(Event.TYPE));
-
-					if (Integer.parseInt(daykind) == 1) {
-						daykind = "記念日";
-					} else if (Integer.parseInt(daykind) == 3) {
-						daykind = "誕生日";
-					}
-
-					// 今年の誕生日が過ぎたかどうか判定
-					String age = null;
-					int yyyy, mm, dd;
-					// 年、月、日に分けint型へキャスト
-					yyyy = Integer.parseInt(date.substring(0, 4));
-					mm = Integer.parseInt(date.substring(5, 7));
-					dd = Integer.parseInt(date.substring(8, 10));
-
-					if ((mMonth + 1 < mm)
-							|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
-						age = Integer.toString(mYear - yyyy - 1);
-					} else if ((mMonth + 1 > mm)
-							|| ((mMonth + 1 == mm) && (mDay >= dd))) { // 過ぎてる
-						age = Integer.toString(mYear - yyyy);
-					}
-
-					item.setParam(displayName, daykind, date, age);
-					mList.add(item);
 				}
 			} finally {
 				c3.close();
 			}
+		}
+	}
+
+	/**
+	 * 誕生日フォーマットのチェック
+	 * 
+	 * @param date
+	 *            　誕生日情報
+	 * @return date 修正した情報
+	 */
+	public String DateCheck(String date) {
+		if (date.length() == 10) { // 文字数は正しい
+			if (date.indexOf("-") != -1 && date.substring(4, 5).equals("-")
+					&& date.substring(7, 8).equals("-")) {
+				return date; // 正しいのでそのまま帰す
+
+			} else { // 10文字だけど”-”がない
+				try {
+					int temp = 0;
+					temp = Integer.parseInt(date.substring(0, 4));
+					temp = Integer.parseInt(date.substring(5, 7));
+					temp = Integer.parseInt(date.substring(8, 10));
+					String date_tmp = date.substring(0, 4) + "-"
+							+ date.substring(5, 7) + "-"
+							+ date.substring(8, 10);
+					return date_tmp;
+				} catch (Exception e) {
+					return null;
+				}
+			}
+
+		} else if(date.length() < 10) { // 文字数が正しくない
+			String date_tmp = null;
+			int hit[] = { 0, 0 };
+			int hit_point = 0;
+			int temp = 0;
+
+			for (int i = 0; i < date.length(); i++) {
+				try {
+					temp = Integer.parseInt(date.substring(i, i + 1));
+					if (logstatus == true) {
+						Log.d("Birth2Cal", Integer.toString(temp));
+					}
+				} catch (Exception e) {
+					hit[hit_point] = i;
+					hit_point++;
+				}
+			}
+
+			if (hit_point >= 2) {
+				try {
+					int temp1, temp2, temp3 = 0;
+					if (hit[0] < 4 || (hit[1] - hit[0]) < 2 || hit_point >= 3) {
+						return null; // 年が4桁以下
+					} else {
+						NumberFormat nf = new DecimalFormat("00");
+						temp1 = Integer.parseInt(date.substring(0, hit[0]));
+						temp2 = Integer.parseInt(date.substring(hit[0] + 1,
+								hit[1]));
+						temp3 = Integer.parseInt(date.substring(hit[1] + 1,
+								date.length()));
+						if (temp3 > 31 || temp2 > 12)
+							return null;
+						date_tmp = Integer.toString(temp1) + "-"
+								+ nf.format(temp2) + "-" + nf.format(temp3);
+						return date_tmp;
+					}
+				} catch (Exception e) {
+					return null;
+				}
+
+			} else if (hit_point == 0 && date.length() == 8) { // 区切り文字がないけど20000101なので判定できる
+				int temp1, temp2, temp3 = 0;
+				try {
+					temp1 = Integer.parseInt(date.substring(0, 4));
+					temp2 = Integer.parseInt(date.substring(4, 6));
+					temp3 = Integer.parseInt(date.substring(6, 8));
+					date_tmp = date.substring(0, 4) + "-"
+							+ date.substring(4, 6) + "-" + date.substring(6, 8);
+					return date_tmp;
+				} catch (Exception e) {
+					return null;
+				}
+			} else { // 2000111みたいな1月11日なのか11月1日なのか判定不可
+				return null;
+			}
+		}else{
+			return null;
 		}
 	}
 
