@@ -287,39 +287,42 @@ public class TabBirthday extends Activity implements Runnable, OnClickListener {
 						String age = null;
 						int yyyy, mm, dd;
 						// 年、月、日に分けint型へキャスト
-						yyyy = Integer.parseInt(date.substring(0, 4));
-						mm = Integer.parseInt(date.substring(5, 7));
-						dd = Integer.parseInt(date.substring(8, 10));
+						yyyy = Integer.parseInt(date_tmp.substring(0, 4));
+						mm = Integer.parseInt(date_tmp.substring(5, 7));
+						dd = Integer.parseInt(date_tmp.substring(8, 10));
 
 						int month_day = 0;
 
 						if ((mMonth + 1 < mm)
 								|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
 							age = Integer.toString(mYear - yyyy - 1);
-							month_day = Integer.parseInt(date.substring(5, 7))
+							month_day = Integer.parseInt(date_tmp.substring(5,
+									7))
 									* 100
-									+ Integer.parseInt(date.substring(8, 10));
+									+ Integer.parseInt(date_tmp
+											.substring(8, 10));
 						} else if ((mMonth + 1 == mm) && (mDay == dd)) { // 今日
 							age = Integer.toString(mYear - yyyy);
-							month_day = Integer.parseInt(date.substring(5, 7))
+							month_day = Integer.parseInt(date_tmp.substring(5,
+									7))
 									* 100
-									+ Integer.parseInt(date.substring(8, 10));
+									+ Integer.parseInt(date_tmp
+											.substring(8, 10));
 						} else if ((mMonth + 1 > mm)
 								|| ((mMonth + 1 == mm) && (mDay > dd))) { // 過ぎてる
 							age = Integer.toString(mYear - yyyy);
-							month_day = Integer.parseInt(date.substring(5, 7))
+							month_day = Integer.parseInt(date_tmp.substring(5,
+									7))
 									* 100
-									+ Integer.parseInt(date.substring(8, 10))
-									+ 10000;
+									+ Integer.parseInt(date_tmp
+											.substring(8, 10)) + 10000;
 						}
 
-						sortList.add(new SortObj(displayName, date, daykind,
-								age, month_day));
+						sortList.add(new SortObj(displayName, date_tmp,
+								daykind, age, month_day));
 
 						Collections.sort(sortList, new Comparator<SortObj>() {
 							public int compare(SortObj t1, SortObj t2) {
-								// Log.d("birth2cal",
-								// Integer.toString(t1.getNum5()));
 								return t1.getNum5() - t2.getNum5();
 							}
 						});
@@ -330,9 +333,6 @@ public class TabBirthday extends Activity implements Runnable, OnClickListener {
 			}
 
 			for (SortObj obj : sortList) {
-				Log.d("birth2cal", "[" + obj.getNum1() + "][" + obj.getNum2()
-						+ "][" + obj.getNum3() + "][" + obj.getNum4() + "]");
-
 				ContactsStatus item = new ContactsStatus();
 				item.setParam(obj.getNum1(), obj.getNum3(), obj.getNum2(),
 						obj.getNum4());

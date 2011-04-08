@@ -280,11 +280,12 @@ public class TabName extends Activity implements Runnable, OnClickListener {
 									String age = null;
 									int yyyy, mm, dd;
 									// 年、月、日に分けint型へキャスト
-									yyyy = Integer.parseInt(date
-											.substring(0, 4));
-									mm = Integer.parseInt(date.substring(5, 7));
-									dd = Integer
-											.parseInt(date.substring(8, 10));
+									yyyy = Integer.parseInt(date_tmp.substring(
+											0, 4));
+									mm = Integer.parseInt(date_tmp.substring(5,
+											7));
+									dd = Integer.parseInt(date_tmp.substring(8,
+											10));
 
 									if ((mMonth + 1 < mm)
 											|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
@@ -295,8 +296,8 @@ public class TabName extends Activity implements Runnable, OnClickListener {
 										age = Integer.toString(mYear - yyyy);
 									}
 
-									item.setParam(displayName, daykind, date,
-											age);
+									item.setParam(displayName, daykind,
+											date_tmp, age);
 									mList.add(item);
 								}
 							}

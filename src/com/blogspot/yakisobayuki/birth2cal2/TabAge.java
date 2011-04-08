@@ -249,9 +249,9 @@ public class TabAge extends Activity implements Runnable, OnClickListener {
 						String age = null;
 						int yyyy, mm, dd;
 						// 年、月、日に分けint型へキャスト
-						yyyy = Integer.parseInt(date.substring(0, 4));
-						mm = Integer.parseInt(date.substring(5, 7));
-						dd = Integer.parseInt(date.substring(8, 10));
+						yyyy = Integer.parseInt(date_tmp.substring(0, 4));
+						mm = Integer.parseInt(date_tmp.substring(5, 7));
+						dd = Integer.parseInt(date_tmp.substring(8, 10));
 
 						if ((mMonth + 1 < mm)
 								|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
@@ -261,7 +261,7 @@ public class TabAge extends Activity implements Runnable, OnClickListener {
 							age = Integer.toString(mYear - yyyy);
 						}
 
-						item.setParam(displayName, daykind, date, age);
+						item.setParam(displayName, daykind, date_tmp, age);
 						mList.add(item);
 					}
 				}
@@ -299,7 +299,7 @@ public class TabAge extends Activity implements Runnable, OnClickListener {
 				}
 			}
 
-		} else if(date.length() < 10) { // 文字数が正しくない
+		} else if (date.length() < 10) { // 文字数が正しくない
 			String date_tmp = null;
 			int hit[] = { 0, 0 };
 			int hit_point = 0;
@@ -354,7 +354,7 @@ public class TabAge extends Activity implements Runnable, OnClickListener {
 			} else { // 2000111みたいな1月11日なのか11月1日なのか判定不可
 				return null;
 			}
-		}else{
+		} else {
 			return null;
 		}
 	}
