@@ -1,4 +1,4 @@
 wp
 .DS_Store
-bin/
 target/
+*.swp
