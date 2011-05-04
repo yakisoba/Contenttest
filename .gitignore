@@ -2,3 +2,5 @@ wp
 .DS_Store
 target/
 *.swp
+gen/
+bin/
