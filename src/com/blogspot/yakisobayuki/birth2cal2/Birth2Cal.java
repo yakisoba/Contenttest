@@ -1,6 +1,7 @@
 package com.blogspot.yakisobayuki.birth2cal2;
 
 import java.util.Calendar;
+
 import android.app.AlertDialog;
 import android.app.TabActivity;
 import android.content.Context;
@@ -16,7 +17,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TabHost;
@@ -79,7 +79,7 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 		spec = tabHost.newTabSpec("tab1").setIndicator(childview1)
 				.setContent(intent);
 		tabHost.addTab(spec);
-
+		
 		intent = new Intent().setClass(this, TabAge.class);
 		View childview2 = new CustomTabContentView(this, "年齢順",
 				android.R.drawable.ic_menu_sort_by_size);
@@ -96,6 +96,7 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 
 	}
 
+	// タブ表示を変更する
 	public class CustomTabContentView extends FrameLayout {
 		LayoutInflater inflater = (LayoutInflater) getApplicationContext()
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -106,7 +107,7 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 
 		public CustomTabContentView(Context context, String title, int icon) {
 			this(context);
-			View childview = inflater.inflate(R.layout.tabwidget1, null);
+			View childview = inflater.inflate(R.layout.tabwidget, null);
 			TextView tv = (TextView) childview.findViewById(R.id.textview);
 			ImageView iv = (ImageView) childview.findViewById(R.id.imageview);
 			tv.setText(title);
@@ -117,20 +118,14 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 
 	@Override
 	public View createTabContent(String tag) {
-		// TODO 自動生成されたメソッド・スタブ
 		return null;
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean ret = super.onCreateOptionsMenu(menu);
 
+		// menuの追加
 		menu.add(0, Menu.FIRST, Menu.NONE, "カレンダー選択");
-		menu.add(0, Menu.FIRST + 1, Menu.NONE, "繰り返し年数設定");
-
-		// おちゃめ機能
-		if (mMonth == 11 && mDay == 1) {
-			menu.add(0, Menu.FIRST + 2, Menu.NONE, "about");
-		}
 		return ret;
 	}
 
@@ -200,66 +195,8 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 							}).show();
 			break;
 
-		case 2:
-			// 登録年数のリスト作成
-			final String[] check_year = { "1", "2", "3", "4", "5", "6", "7",
-					"8", "9", "10", "11", "12", "13", "14", "15", "期間なし" };
-
-			// プリファレンスでデータを取得
-			SharedPreferences prefr = getSharedPreferences("cal_list",
-					MODE_PRIVATE);
-			int year_id = prefr.getInt("calendar_year_v112", 1);
-
-			// 選択するカレンダーを明示的に初期化
-			mButton_y = year_id - 1;
-
-			// ダイアログの表示
-			new AlertDialog.Builder(this)
-					.setTitle("登録年数選択")
-					.setSingleChoiceItems(check_year, year_id - 1,
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int which) {
-									mButton_y = which;
-								}
-							})
-					.setPositiveButton("OK",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int whichButton) {
-									new AlertDialog.Builder(Birth2Cal.this);
-
-									// 選択したボタンの名称をプリファレンスで保存
-									SharedPreferences pref = getSharedPreferences(
-											"cal_list", MODE_PRIVATE);
-									Editor e = pref.edit();
-									e.putInt("calendar_year_v112",
-											mButton_y + 1);
-									e.commit();
-								}
-							})
-					.setNegativeButton("Cancel",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int whichButton) {
-									new AlertDialog.Builder(Birth2Cal.this);
-								}
-							}).show();
-			break;
-
-		// おちゃめ機能 12月1日だけ表示される
-		case 3:
-			// カレンダー選択を行っていなかったときアラームダイアログを表示する
-			ViewGroup alert = (ViewGroup) findViewById(R.id.yaki_birthday);
-			View layout = getLayoutInflater().inflate(R.layout.yaki, alert);
-
-			// layoutで記載したviewをダイアログに設定する
-			AlertDialog.Builder dlg;
-			dlg = new AlertDialog.Builder(Birth2Cal.this);
-			dlg.setView(layout);
-			dlg.setPositiveButton("OK", null);
-			dlg.show();
 		}
+
 		return ret;
 	}
 
@@ -282,6 +219,7 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 				.parse("content://" + AUTHORITY + "/calendars");
 
 		final String[] projection = new String[] { "_id", "displayName" };
+		// access_level=700はオーナー権限、writeが出来るカレンダーを取得。
 		final Cursor clist = managedQuery(calendars, projection,
 				"access_level = 700", null, null);
 
