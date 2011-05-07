@@ -194,7 +194,6 @@ public class CreateCalendar extends
 		}
 	}
 
-	// dtstarパラメータ作成
 	public String getStartDay(String str) {
 		String setDay = null;
 		String birth = null;
@@ -218,9 +217,6 @@ public class CreateCalendar extends
 			e.printStackTrace();
 			return null;
 		}
-
-		// setDay = String.format("%04d", yyyy) + String.format("%02d", mm)
-		// + String.format("%02d", dd);
 
 		// 開始時間登録
 		// 誕生日のフォーマットを、yyyy-MM-dd HH:mm:ss に変換するために変更
