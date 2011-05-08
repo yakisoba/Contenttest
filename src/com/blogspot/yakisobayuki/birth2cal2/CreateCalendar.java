@@ -1,4 +1,5 @@
 package com.blogspot.yakisobayuki.birth2cal2;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -16,16 +17,19 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-public class CreateCalendar extends
-		AsyncTask<List<ContactsStatus>, Integer, Void> {
+public class CreateCalendar extends Activity {
 	final Boolean logstatus = false;
+	private List<ContactsStatus> mList = null;
 
 	private ProgressDialog mProgressDialog = null;
 	private Activity mActivity;
@@ -45,8 +49,9 @@ public class CreateCalendar extends
 		this.mContext = context; // Prefarence用にcontextが必要
 	}
 
-	@Override
-	protected void onPreExecute() {
+	public void CreateStart(List<ContactsStatus> list) {
+		this.mList = list;
+		
 		// バックグラウンドの処理前にUIスレッドでダイアログ表示
 		mProgressDialog = new ProgressDialog(mActivity);
 		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -54,53 +59,64 @@ public class CreateCalendar extends
 		mProgressDialog.setMax(mCount);
 		mProgressDialog.setCancelable(true);
 		mProgressDialog.show();
+
+		(new Thread(runnable)).start();
 	}
 
-	@Override
-	protected Void doInBackground(List<ContactsStatus>... params) {
+	private Runnable runnable = new Runnable() {
 
-		int count = 0;
+		@Override
+		public void run() {
+			int count = 0;
 
-		SharedPreferences pref = mContext.getSharedPreferences("cal_list", 0);
-		int calId = Integer.parseInt(pref.getString("calendar_list_id", "0"));
+			SharedPreferences pref = mContext.getSharedPreferences("cal_list",
+					0);
+			int calId = Integer.parseInt(pref
+					.getString("calendar_list_id", "0"));
 
-		// 全ContactsStatusからフラグがONのものだけ処理
-		for (ContactsStatus List : params[0]) {
-			if (List.getCheckFlag() == true) {
+			// 全ContactsStatusからフラグがONのものだけ処理
+			for (ContactsStatus List : mList) {
+				if (List.getCheckFlag() == true) {
 
-				CreateEvent(List.getBirth(), List.getDisplayName(),
-						List.getDayKind(), calId);
+					CreateEvent(List.getBirth(), List.getDisplayName(),
+							List.getDayKind(), calId);
 
-				// 処理完了数を通知
-				count++;
-				onProgressUpdate(count);
+					// 処理完了数を通知
+					count++;
+					mProgressDialog.setProgress(count);
+				}
 			}
+
+			Message message = new Message();
+			Bundle bundle = new Bundle();
+			bundle.putString("complete", Integer.toString(count));
+			message.setData(bundle);
+			handler.sendMessage(message);
+			
+			mProgressDialog.dismiss();
 		}
-		return null;
-	}
+	};
 
-	@Override
-	protected void onProgressUpdate(Integer... progress) {
-		mProgressDialog.incrementProgressBy(progress[0]);
-	}
+	private final Handler handler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			// 終わったら完了のダイアログを表示
+			ViewGroup alert = (ViewGroup) mActivity
+					.findViewById(R.id.dialog);
+			View layout = mActivity.getLayoutInflater().inflate(
+					R.layout.dialog, alert);
 
-	@Override
-	protected void onPostExecute(Void result) {
-		mProgressDialog.dismiss();
-
-		// 終わったら完了のダイアログを表示
-		ViewGroup alert = (ViewGroup) mActivity
-				.findViewById(R.id.alert_complete);
-		View layout = mActivity.getLayoutInflater().inflate(
-				R.layout.com_calendar, alert);
-
-		AlertDialog.Builder dlg;
-		dlg = new AlertDialog.Builder(mActivity);
-		dlg.setPositiveButton("OK", null);
-		dlg.setTitle("complete!!");
-		dlg.setView(layout);
-		dlg.show();
-	}
+			TextView tv = (TextView) layout.findViewById(R.id.dialog_text);
+			tv.setText("カレンダー登録完了！");
+			
+			AlertDialog.Builder dlg;
+			dlg = new AlertDialog.Builder(mActivity);
+			dlg.setPositiveButton("OK", null);
+			dlg.setTitle("complete!!");
+			dlg.setView(layout);
+			dlg.show();
+		}
+	};
 
 	// カレンダー登録
 	public void CreateEvent(String birthday, String ContactName,
@@ -175,22 +191,21 @@ public class CreateCalendar extends
 			// カレンダーへ登録
 			cr.insert(events, values);
 
-			// 既に登録されていた場合
+			 // 既に登録されていた場合
 		} else if (eventcheck == 1) {
-
-			// 該当のイベントIDをURIに付加して処理
-			Uri pevents = Uri.withAppendedPath(events, id);
-			values.put("calendar_id", calId);
-			values.put("title", ContactName + " " + daykind);
-			values.put("allDay", 1);
-			values.put("dtstart", startLongDay);
-			values.put("eventTimezone",
-					TimeZone.getDefault().getDisplayName(Locale.ENGLISH));
-			values.put("rrule", rrule);
-			values.put("duration", "P1D");
-
-			// カレンダーを更新
-			cr.update(pevents, values, null, null);
+			 // 該当のイベントIDをURIに付加して処理
+			 Uri pevents = Uri.withAppendedPath(events, id);
+			 values.put("calendar_id", calId);
+			 values.put("title", ContactName + " " + daykind);
+			 values.put("allDay", 1);
+			 values.put("dtstart", startLongDay);
+			 values.put("eventTimezone",
+			 TimeZone.getDefault().getDisplayName(Locale.ENGLISH));
+			 values.put("rrule", rrule);
+			 values.put("duration", "P1D");
+			
+			 // カレンダーを更新
+			 cr.update(pevents, values, null, null);
 		}
 	}
 

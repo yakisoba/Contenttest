@@ -295,7 +295,6 @@ public class TabBirthday extends Activity implements OnClickListener {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void onClick(View v) {
 
@@ -337,9 +336,14 @@ public class TabBirthday extends Activity implements OnClickListener {
 
 			if (calId == 0) {
 				// カレンダー選択を行っていなかったときアラームダイアログを表示する
-				ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nocalendar);
-				View layout = getLayoutInflater().inflate(R.layout.nocalendar,
+				ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
+				View layout = getLayoutInflater().inflate(R.layout.dialog,
 						alert);
+				TextView tv1 = (TextView) layout.findViewById(R.id.dialog_text);
+				tv1.setText("カレンダーが登録されていません。");
+				TextView tv2 = (TextView) layout
+						.findViewById(R.id.dialog_text2);
+				tv2.setText("メニューから選択してください。");
 
 				// layoutで記載したviewをダイアログに設定する
 				AlertDialog.Builder dlg;
@@ -359,9 +363,12 @@ public class TabBirthday extends Activity implements OnClickListener {
 
 				if (Chk_count == 0) {
 					// チェックボックスのチェックが0個だったらエラー
-					ViewGroup alert = (ViewGroup) findViewById(R.id.alert_nochek);
-					View layout = getLayoutInflater().inflate(R.layout.nocheck,
+					ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
+					View layout = getLayoutInflater().inflate(R.layout.dialog,
 							alert);
+					TextView tv1 = (TextView) layout
+							.findViewById(R.id.dialog_text);
+					tv1.setText("何もチェックされていません。");
 
 					AlertDialog.Builder dlg;
 					dlg = new AlertDialog.Builder(TabBirthday.this);
@@ -374,7 +381,7 @@ public class TabBirthday extends Activity implements OnClickListener {
 					// 問題がなければプログレスダイアログを表示し、別スレッドで処理
 					CreateCalendar createCalendar = new CreateCalendar(this,
 							Chk_count, getApplicationContext());
-					createCalendar.execute(mList);
+					createCalendar.CreateStart(mList);
 				}
 			}
 		}

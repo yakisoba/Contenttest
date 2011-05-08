@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="fill_parent"
-	android:orientation="vertical">
-	<ListView android:id="@+id/setting" android:layout_width="fill_parent"
-		android:layout_height="wrap_content"/>
-</LinearLayout>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<PreferenceScreen android:title="選択中のカレンダー"
+		android:summary="カレンダー：" android:key="select_calendar" />
+	<PreferenceScreen android:title="誕生日/記念日の完全消去"
+		android:summary="選択中のカレンダーの登録済情報を削除" android:key="delete_calendar" />
+
+</PreferenceScreen>

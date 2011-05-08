@@ -19,6 +19,7 @@ public class SelectCal extends Activity {
 	String result;
 	int mButton;
 	int mButton_y;
+	AlertDialog mAlertDialog;
 
 	public SelectCal(Activity activity, Context context) {
 		this.mActivity = activity;
@@ -113,8 +114,12 @@ public class SelectCal extends Activity {
 
 		// 以前のボタン名とボタン番号の整合性確認。合っていない場合は未選択状態にする。
 		if (button_id >= 0) {
-			if (cal_name.equals(mCalendar_list[button_id])) {
-			} else {
+			try {
+				if (cal_name.equals(mCalendar_list[button_id])) {
+				} else {
+					button_id = -1;
+				}
+			} catch (Exception e) {
 				button_id = -1;
 			}
 		}
@@ -123,7 +128,7 @@ public class SelectCal extends Activity {
 		mButton = button_id;
 
 		// ダイアログの表示
-		new AlertDialog.Builder(mActivity)
+		mAlertDialog = new AlertDialog.Builder(mActivity)
 				.setTitle("カレンダー選択")
 				.setSingleChoiceItems(mCalendar_list, button_id,
 						new DialogInterface.OnClickListener() {
@@ -146,7 +151,7 @@ public class SelectCal extends Activity {
 									mCalendar_list[mButton]);
 							e.putString("calendar_list_id", result);
 							e.putInt("calendar_list_num_v112", mButton);
-							e.commit();
+							e.commit();							
 						}
 					}
 				})
