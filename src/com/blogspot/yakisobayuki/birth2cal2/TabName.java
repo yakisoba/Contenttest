@@ -2,6 +2,8 @@ package com.blogspot.yakisobayuki.birth2cal2;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.app.Activity;
@@ -28,6 +30,8 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.blogspot.yakisobayuki.birth2cal2.CursorJoiner.Result;
+
 public class TabName extends Activity implements OnClickListener {
 	/** Called when the activity is first created. */
 	final Boolean logstatus = false;
@@ -46,6 +50,49 @@ public class TabName extends Activity implements OnClickListener {
 	// 表示のアイテム
 	private CheckBox check_full;
 	private Button button_import;
+
+	public class SortObj {
+		private String displayName;
+		private String daykind;
+		private String birthday;
+		private String age;
+		private String fname;
+		private String gname;
+
+		public SortObj(String name, String type, String day, String age,
+				String fname, String gname) {
+			this.displayName = name;
+			this.daykind = type;
+			this.birthday = day;
+			this.age = age;
+			this.fname = fname;
+			this.gname = gname;
+		}
+
+		public String getName() {
+			return displayName;
+		}
+
+		public String getDay() {
+			return birthday;
+		}
+
+		public String getType() {
+			return daykind;
+		}
+
+		public String getAge() {
+			return age;
+		}
+
+		public String getFname() {
+			return fname;
+		}
+
+		public String getGname() {
+			return gname;
+		}
+	}
 
 	@Override
 	public void onCreate(Bundle bundle) {
@@ -168,104 +215,115 @@ public class TabName extends Activity implements OnClickListener {
 				StructuredName.PHONETIC_GIVEN_NAME };
 		String selection = Data.MIMETYPE + "=?";
 		String[] selectionArgs = new String[] { StructuredName.CONTENT_ITEM_TYPE };
+		String sortOdr = StructuredName.CONTACT_ID + " ASC";
 
-		// まずStructuredNameからユーザ名のふりがなを取得しソート
-		Cursor c1 = managedQuery(uri, projection, selection, selectionArgs,
-				StructuredName.PHONETIC_FAMILY_NAME + " ASC ,"
-						+ StructuredName.PHONETIC_GIVEN_NAME + " ASC");
+		Cursor c1 = getContentResolver().query(uri, projection, selection,
+				selectionArgs, sortOdr);
 
-		projection = new String[] { Event.DISPLAY_NAME, Event.DATA, Event.TYPE };
-		selection = Data.CONTACT_ID + "=? AND " + Data.MIMETYPE + "=? AND ("
-				+ Event.TYPE + "=? OR " + Event.TYPE + "=?) ";
+		projection = new String[] { Event.CONTACT_ID, Event.DISPLAY_NAME,
+				Event.DATA, Event.TYPE };
+		selection = Data.MIMETYPE + "=? AND (" + Event.TYPE + "=? OR "
+				+ Event.TYPE + "=?) ";
+		selectionArgs = new String[] { Event.CONTENT_ITEM_TYPE,
+				String.valueOf(Event.TYPE_ANNIVERSARY),
+				String.valueOf(Event.TYPE_BIRTHDAY) };
+		sortOdr = Event.CONTACT_ID + " ASC";
 
-		if (c1 != null) {
-			try {
-				while (c1.moveToNext()) {
+		Cursor c2 = getContentResolver().query(uri, projection, selection,
+				selectionArgs, sortOdr);
 
-					selectionArgs = new String[] {
-							c1.getString(c1
-									.getColumnIndex(StructuredName.CONTACT_ID)),
-							Event.CONTENT_ITEM_TYPE,
-							String.valueOf(Event.TYPE_ANNIVERSARY),
-							String.valueOf(Event.TYPE_BIRTHDAY) };
+		List<SortObj> sortList = new ArrayList<SortObj>();
 
-					// ふりがなソートしたデータを利用して誕生日と記念日のデータを出力する
-					Cursor c3 = managedQuery(
-							uri,
-							new String[] { Event.CONTACT_ID,
-									Event.DISPLAY_NAME, Event.TYPE, Event.DATA,
-									Event.DATA_VERSION },
-							Data.CONTACT_ID + "=? AND " + Data.MIMETYPE
-									+ "=? AND (" + Event.TYPE + "=? OR "
-									+ Event.TYPE + "=? )",
-							new String[] { c1.getString(0),
-									Event.CONTENT_ITEM_TYPE,
-									String.valueOf(Event.TYPE_ANNIVERSARY),
-									String.valueOf(Event.TYPE_BIRTHDAY) }, null);
+		CursorJoiner joiner = new CursorJoiner(c1,
+				new String[] { StructuredName.CONTACT_ID }, c2,
+				new String[] { Event.CONTACT_ID });
 
-					if (c3 != null) {
-						try {
-							while (c3.moveToNext()) {
-								// コンタクトユーザのリストを作成
-								ContactsStatus item = new ContactsStatus();
+		for (CursorJoiner.Result joinerResult : joiner) {
+			if (joinerResult == Result.BOTH) {
+				String displayName = c2.getString(c2
+						.getColumnIndex(Event.DISPLAY_NAME));
+				String date = c2.getString(c2.getColumnIndex(Event.DATA));
 
-								String displayName = c3.getString(c3
-										.getColumnIndex(Event.DISPLAY_NAME));
-								String date = c3.getString(c3
-										.getColumnIndex(Event.DATA));
-
-								// 誕生日情報をフォーマット変換
-								String date_tmp;
-								try {
-									date_tmp = new BirthdayFormat()
-											.DateCheck(date);
-								} catch (Exception e) {
-									date_tmp = null;
-								}
-
-								if (date_tmp != null) {
-
-									String daykind = c3.getString(c3
-											.getColumnIndex(Event.TYPE));
-
-									if (Integer.parseInt(daykind) == 1) {
-										daykind = "記念日";
-									} else if (Integer.parseInt(daykind) == 3) {
-										daykind = "誕生日";
-									}
-
-									// 今年の誕生日が過ぎたかどうか判定
-									String age = null;
-									int yyyy, mm, dd;
-									// 年、月、日に分けint型へキャスト
-									yyyy = Integer.parseInt(date_tmp.substring(
-											0, 4));
-									mm = Integer.parseInt(date_tmp.substring(5,
-											7));
-									dd = Integer.parseInt(date_tmp.substring(8,
-											10));
-
-									if ((mMonth + 1 < mm)
-											|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
-										age = Integer
-												.toString(mYear - yyyy - 1);
-									} else if ((mMonth + 1 > mm)
-											|| ((mMonth + 1 == mm) && (mDay >= dd))) { // 過ぎてる
-										age = Integer.toString(mYear - yyyy);
-									}
-
-									item.setParam(displayName, daykind,
-											date_tmp, age);
-									mList.add(item);
-								}
-							}
-						} finally {
-							c3.close();
-						}
-					}
+				// 誕生日情報をフォーマット変換
+				String date_tmp;
+				try {
+					date_tmp = new BirthdayFormat().DateCheck(date);
+				} catch (Exception e) {
+					date_tmp = null;
 				}
-			} finally {
-				c1.close();
+
+				if (date_tmp != null) {
+
+					String daykind = c2
+							.getString(c2.getColumnIndex(Event.TYPE));
+
+					if (Integer.parseInt(daykind) == 1) {
+						daykind = "記念日";
+					} else if (Integer.parseInt(daykind) == 3) {
+						daykind = "誕生日";
+					}
+
+					// 今年の誕生日が過ぎたかどうか判定
+					String age = null;
+					int yyyy, mm, dd;
+					// 年、月、日に分けint型へキャスト
+					yyyy = Integer.parseInt(date_tmp.substring(0, 4));
+					mm = Integer.parseInt(date_tmp.substring(5, 7));
+					dd = Integer.parseInt(date_tmp.substring(8, 10));
+
+					if ((mMonth + 1 < mm)
+							|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
+						age = Integer.toString(mYear - yyyy - 1);
+					} else if ((mMonth + 1 > mm)
+							|| ((mMonth + 1 == mm) && (mDay >= dd))) { // 過ぎてる
+						age = Integer.toString(mYear - yyyy);
+					}
+
+					String Fname = c1
+							.getString(c1
+									.getColumnIndex(StructuredName.PHONETIC_FAMILY_NAME));
+					String Gname = c1
+							.getString(c1
+									.getColumnIndex(StructuredName.PHONETIC_GIVEN_NAME));
+
+					sortList.add(new SortObj(displayName, daykind, date_tmp,
+							age, Fname, Gname));
+
+					Collections.sort(sortList, new Stringcompare());
+				}
+			}
+		}
+
+		for (SortObj obj : sortList) {
+			// コンタクトユーザのリストを作成
+			ContactsStatus item = new ContactsStatus();
+			item.setParam(obj.getName(), obj.getType(), obj.getDay(),
+					obj.getAge());
+	        if(!mList.contains(item)){
+				mList.add(item);
+	        }
+		}
+	}
+
+	class Stringcompare implements Comparator<SortObj> {
+		public Stringcompare() {
+
+		}
+
+		@Override
+		public int compare(SortObj object1, SortObj object2) {
+			if (object1.getFname() == null && object2.getFname() == null) {
+				return 0;
+			} else if (object1.getFname() == null) {
+				return 1;
+			} else if (object2.getFname() == null) {
+				return -1;
+			}
+
+			if (object1.getFname().equals(object2.getFname())) {
+				return (object1.getGname()).compareTo(object2.getGname());
+			} else {
+				return (object1.getFname()).compareTo(object2.getFname());
 			}
 		}
 	}

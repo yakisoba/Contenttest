@@ -209,7 +209,7 @@ public class TabBirthday extends Activity implements OnClickListener {
 				String.valueOf(Event.TYPE_ANNIVERSARY),
 				String.valueOf(Event.TYPE_BIRTHDAY) };
 
-		Cursor c1 = managedQuery(uri, projection, selection, selectionArgs,
+		Cursor c1 = getContentResolver().query(uri, projection, selection, selectionArgs,
 				null);
 
 		// 一旦ソート用のリストに格納。(あとでContact用のリストに格納)
@@ -290,7 +290,9 @@ public class TabBirthday extends Activity implements OnClickListener {
 				ContactsStatus item = new ContactsStatus();
 				item.setParam(obj.getNum1(), obj.getNum3(), obj.getNum2(),
 						obj.getNum4());
-				mList.add(item);
+		        if(!mList.contains(item)){
+					mList.add(item);
+		        }
 			}
 		}
 	}

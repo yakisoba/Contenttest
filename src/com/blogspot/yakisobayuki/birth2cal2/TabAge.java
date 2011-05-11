@@ -170,7 +170,11 @@ public class TabAge extends Activity implements OnClickListener {
 				String.valueOf(Event.TYPE_BIRTHDAY) };
 
 		// ふりがなソートしたデータを利用して誕生日と記念日のデータを出力する
-		Cursor c3 = managedQuery(uri, projection, selection, selectionArgs,
+		Cursor c3 = getContentResolver().query(
+				uri,
+				projection,
+				selection,
+				selectionArgs,
 				Event.TYPE_BIRTHDAY + " ASC ," + Event.TYPE_ANNIVERSARY
 						+ " ASC");
 
@@ -219,7 +223,9 @@ public class TabAge extends Activity implements OnClickListener {
 						}
 
 						item.setParam(displayName, daykind, date_tmp, age);
-						mList.add(item);
+				        if(!mList.contains(item)){
+							mList.add(item);
+				        }
 					}
 				}
 			} finally {

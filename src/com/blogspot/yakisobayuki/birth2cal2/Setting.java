@@ -161,7 +161,7 @@ public class Setting extends PreferenceActivity {
 			// 既に同じ情報を登録してあるか確認
 			Uri events = Uri.parse("content://" + AUTHORITY + "/events");
 			String[] projection = new String[] { "title", "_id" };
-			Cursor cevent = managedQuery(events, projection, "calendar_id ="
+			Cursor cevent = getContentResolver().query(events, projection, "calendar_id ="
 					+ calId, null, null);
 
 			while (cevent.moveToNext()) {
