@@ -2,4 +2,47 @@
 <resources>
 	<string name="app_name">Birth2Cal</string>
 	<string name="description">連絡帳から誕生日をカレンダーへ登録するアプリ</string>
+
+	<!-- タブのタイトル -->
+	<string name="name_sort">名前順</string>
+	<string name="birth_sort">誕生日順</string>
+	<string name="age_sort">年齢順</string>
+
+	<!-- オプションのタイトル -->
+	<string name="op_cal">カレンダー選択</string>
+	<string name="op_setting">設定</string>
+
+	<!-- リスト表示 -->
+	<string name="birthday">誕生日</string>
+	<string name="anniversary">記念日</string>
+	<string name="age">年</string>
+	<string name="ani">周年</string>	
+	<string name="check_on">全てチェック</string>
+	<string name="check_off">チェック解除</string>
+	
+	<!-- カレンダー選択状態 -->
+	<string name="no_select">未選択</string>
+	<string name="select_cal">カレンダー選択</string>
+	
+	<!-- ダイアログ表示用(カレンダー非選択) -->
+	<string name="no_calendar1">カレンダーが選択されていません。</string>
+	<string name="no_calendar2">メニューから選択してください。</string>
+	
+	<!-- ダイアログ表示用(未チェック) -->
+	<string name="no_check">何もチェックされていません。</string>
+
+	<!-- ダイアログ表示用(登録用) -->
+	<string name="add_cal">カレンダーに登録中です</string>
+	<string name="add">カレンダー登録完了！</string>
+
+	<!-- ダイアログ表示用(削除用) -->
+	<string name="select_cal1">カレンダー：</string>
+	<string name="select_cal2"> から</string>
+	<string name="delete_select3">誕生日/記念日情報を消去しますか？</string>
+	<string name="delete_select4">登録済み情報の消去</string>
+	<string name="delete">カレンダー削除完了！</string>
+	
+	<!-- ダイアログ表示用(処理中) -->
+	<string name="read">読込中…</string>
+	
 </resources>

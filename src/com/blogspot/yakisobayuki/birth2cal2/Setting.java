@@ -31,14 +31,15 @@ public class Setting extends PreferenceActivity {
 
 		// 表示カレンダー名を変更(今んところできてない)
 		SharedPreferences pref = getSharedPreferences("cal_list", 0);
-		mCalName = pref.getString("calendar_list_name", "未選択");
+		mCalName = pref.getString("calendar_list_name",
+				getString(R.string.no_select));
 
 		// xmlレイアウトの読み込み
 		this.addPreferencesFromResource(R.layout.setting);
 		// 親のPreferenceScreen
 		CharSequence SP_select = "select_calendar";
 		mScreenPref1 = (PreferenceScreen) findPreference(SP_select);
-		mScreenPref1.setSummary("カレンダー：" + mCalName);
+		mScreenPref1.setSummary(getString(R.string.select_cal1) + mCalName);
 		mScreenPref1
 				.setOnPreferenceClickListener(new OnPreferenceClickListener() {
 					@Override
@@ -68,23 +69,24 @@ public class Setting extends PreferenceActivity {
 			public void onDismiss(DialogInterface dialog) {
 
 				SharedPreferences pref = getSharedPreferences("cal_list", 0);
-				mCalName = pref.getString("calendar_list_name", "未選択");
+				mCalName = pref.getString("calendar_list_name",
+						getString(R.string.no_select));
 
-				mScreenPref1.setSummary("カレンダー：" + mCalName);
+				mScreenPref1.setSummary(getString(R.string.select_cal1)
+						+ mCalName);
 			}
 		});
 		return true;
 	}
 
 	private boolean screenPref2_onPreferenceClick(Preference pref) {
-		if (mCalName.equals("未選択")) {
-						ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
-			View layout = getLayoutInflater().inflate(R.layout.dialog,
-					alert);
-			TextView tv1 = (TextView) layout.findViewById(R.id.dialog_text);
-			tv1.setText("カレンダーが登録されていません。");
-			TextView tv2 = (TextView) layout.findViewById(R.id.dialog_text2);
-			tv2.setText("メニューから選択してください。");
+		if (mCalName.equals(getString(R.string.no_select))) {
+			ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
+			View layout = getLayoutInflater().inflate(R.layout.dialog, alert);
+			TextView tv1 = (TextView) layout.findViewById(R.id.dlg_text1);
+			TextView tv2 = (TextView) layout.findViewById(R.id.dlg_text2);
+			tv1.setText(getString(R.string.no_calendar1));
+			tv2.setText(getString(R.string.no_calendar2));
 
 			// layoutで記載したviewをダイアログに設定する
 			AlertDialog.Builder dlg;
@@ -96,15 +98,15 @@ public class Setting extends PreferenceActivity {
 
 		} else {
 			ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
-			View layout = getLayoutInflater().inflate(R.layout.dialog,
-					alert);
-			TextView tv = (TextView) layout.findViewById(R.id.dialog_text);
-			tv.setText("カレンダー：" + mCalName + "　から");
-			TextView tv2 = (TextView) layout.findViewById(R.id.dialog_text2);
-			tv2.setText("誕生日/記念日情報を消去しますか？");
+			View layout = getLayoutInflater().inflate(R.layout.dialog, alert);
+			TextView tv = (TextView) layout.findViewById(R.id.dlg_text1);
+			tv.setText(getString(R.string.select_cal1) + mCalName
+					+ getString(R.string.select_cal2));
+			TextView tv2 = (TextView) layout.findViewById(R.id.dlg_text2);
+			tv2.setText(getString(R.string.delete_select3));
 
 			new AlertDialog.Builder(Setting.this)
-					.setTitle("登録済み情報の消去")
+					.setTitle(getString(R.string.delete_select4))
 					.setView(layout)
 					.setPositiveButton("OK",
 							new DialogInterface.OnClickListener() {
@@ -161,15 +163,16 @@ public class Setting extends PreferenceActivity {
 			// 既に同じ情報を登録してあるか確認
 			Uri events = Uri.parse("content://" + AUTHORITY + "/events");
 			String[] projection = new String[] { "title", "_id" };
-			Cursor cevent = getContentResolver().query(events, projection, "calendar_id ="
-					+ calId, null, null);
+			Cursor cevent = getContentResolver().query(events, projection,
+					"calendar_id =" + calId, null, null);
 
 			while (cevent.moveToNext()) {
 				// タイトルと開始時間を格納
 				String title = cevent.getString(cevent.getColumnIndex("title"));
 
 				// 開始時間とタイトルが一致するイベントがあればidを取得
-				if (title.indexOf("誕生日") != -1 || title.indexOf("記念日") != -1) {
+				if (title.indexOf(getString(R.string.birthday)) != -1
+						|| title.indexOf(getString(R.string.anniversary)) != -1) {
 					String id = cevent.getString(cevent.getColumnIndex("_id"));
 					ContentResolver cr = getContentResolver();
 
@@ -189,10 +192,9 @@ public class Setting extends PreferenceActivity {
 
 			// 終わったら完了のダイアログを表示
 			ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
-			View layout = getLayoutInflater().inflate(R.layout.dialog,
-					alert);
-			TextView tv = (TextView) layout.findViewById(R.id.dialog_text);
-			tv.setText("カレンダー削除完了！");
+			View layout = getLayoutInflater().inflate(R.layout.dialog, alert);
+			TextView tv = (TextView) layout.findViewById(R.id.dlg_text1);
+			tv.setText(getString(R.string.delete));
 
 			AlertDialog.Builder dlg;
 			dlg = new AlertDialog.Builder(Setting.this);

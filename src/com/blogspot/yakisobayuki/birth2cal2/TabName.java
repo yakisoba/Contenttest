@@ -119,7 +119,7 @@ public class TabName extends Activity implements OnClickListener {
 			// バックグラウンドの処理前にUIスレッドでダイアログ表示
 			progressDialog = new ProgressDialog(TabName.this);
 			progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			progressDialog.setMessage("読込中…");
+			progressDialog.setMessage(getString(R.string.read));
 			progressDialog.setCancelable(false);
 			progressDialog.show();
 		}
@@ -140,7 +140,6 @@ public class TabName extends Activity implements OnClickListener {
 			mAdapter = new ContactAdapter(TabName.this, R.layout.listview,
 					mList);
 			gridView.setAdapter(mAdapter);
-
 		}
 	}
 
@@ -164,36 +163,36 @@ public class TabName extends Activity implements OnClickListener {
 			final ContactsStatus item = getItem(position);
 
 			if (item != null) {
+				TextView displayName, daykind, birthday, age, selkind;
+				final CheckBox checkbox;
+				ImageView image;
 
-				TextView displayName = (TextView) view
-						.findViewById(R.id.ContactsName1);
-				TextView daykind = (TextView) view.findViewById(R.id.DayKind1);
-				TextView birthday = (TextView) view
-						.findViewById(R.id.Birthday1);
-				TextView age = (TextView) view.findViewById(R.id.Age1);
-				final CheckBox chk01 = (CheckBox) view
-						.findViewById(R.id.CheckBox1);
-				ImageView image = (ImageView) view.findViewById(R.id.Image1);
-				TextView selkind = (TextView) view.findViewById(R.id.Age2);
+				displayName = (TextView) view.findViewById(R.id.ContactsName1);
+				daykind = (TextView) view.findViewById(R.id.DayKind1);
+				birthday = (TextView) view.findViewById(R.id.Birthday1);
+				age = (TextView) view.findViewById(R.id.Age1);
+				checkbox = (CheckBox) view.findViewById(R.id.CheckBox1);
+				image = (ImageView) view.findViewById(R.id.Image1);
+				selkind = (TextView) view.findViewById(R.id.Age2);
 
 				displayName.setText(item.getDisplayName());
 				daykind.setText(item.getDayKind());
 				birthday.setText(item.getBirth());
-				chk01.setChecked(item.getCheckFlag());
-
-				if (item.getDayKind().equals("誕生日")) {
-					image.setImageResource(R.drawable.heart);
-					selkind.setText("歳");
-				} else {
-					image.setImageResource(R.drawable.star);
-					selkind.setText("周年");
-				}
+				checkbox.setChecked(item.getCheckFlag());
 				age.setText(item.getAge());
 
+				if (item.getDayKind().equals(getString(R.string.birthday))) {
+					image.setImageResource(R.drawable.heart);
+					selkind.setText(getString(R.string.age));
+				} else {
+					image.setImageResource(R.drawable.star);
+					selkind.setText(getString(R.string.ani));
+				}
+
 				// CheckBoxをチェックしたときの動作
-				chk01.setOnClickListener(new OnClickListener() {
+				checkbox.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						if (chk01.isChecked() == true) {
+						if (checkbox.isChecked() == true) {
 							item.setCheckFlag(true);
 						} else {
 							item.setCheckFlag(false);
@@ -258,9 +257,9 @@ public class TabName extends Activity implements OnClickListener {
 							.getString(c2.getColumnIndex(Event.TYPE));
 
 					if (Integer.parseInt(daykind) == 1) {
-						daykind = "記念日";
+						daykind = getString(R.string.anniversary);
 					} else if (Integer.parseInt(daykind) == 3) {
-						daykind = "誕生日";
+						daykind = getString(R.string.birthday);
 					}
 
 					// 今年の誕生日が過ぎたかどうか判定
@@ -299,9 +298,9 @@ public class TabName extends Activity implements OnClickListener {
 			ContactsStatus item = new ContactsStatus();
 			item.setParam(obj.getName(), obj.getType(), obj.getDay(),
 					obj.getAge());
-	        if(!mList.contains(item)){
+			if (!mList.contains(item)) {
 				mList.add(item);
-	        }
+			}
 		}
 	}
 
@@ -321,6 +320,14 @@ public class TabName extends Activity implements OnClickListener {
 			}
 
 			if (object1.getFname().equals(object2.getFname())) {
+				if (object1.getGname() == null && object2.getGname() == null) {
+					return 0;
+				} else if (object1.getGname() == null) {
+					return 1;
+				} else if (object2.getGname() == null) {
+					return -1;
+				}
+
 				return (object1.getGname()).compareTo(object2.getGname());
 			} else {
 				return (object1.getFname()).compareTo(object2.getFname());
@@ -340,7 +347,7 @@ public class TabName extends Activity implements OnClickListener {
 				}
 				// CheckBoxのテキストを変更
 				CheckBox b = (CheckBox) v;
-				b.setText("チェック解除");
+				b.setText(getString(R.string.check_off));
 
 			} else if (check_full.isChecked() == false) {
 				// リストの分だけCheckBoxをOFFに
@@ -350,7 +357,7 @@ public class TabName extends Activity implements OnClickListener {
 
 				// CheckBoxのテキストを変更
 				CheckBox b = (CheckBox) v;
-				b.setText("全てチェック");
+				b.setText(getString(R.string.check_on));
 			}
 			mAdapter.notifyDataSetChanged();
 
@@ -372,11 +379,10 @@ public class TabName extends Activity implements OnClickListener {
 				ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
 				View layout = getLayoutInflater().inflate(R.layout.dialog,
 						alert);
-				TextView tv1 = (TextView) layout.findViewById(R.id.dialog_text);
-				tv1.setText("カレンダーが登録されていません。");
-				TextView tv2 = (TextView) layout
-						.findViewById(R.id.dialog_text2);
-				tv2.setText("メニューから選択してください。");
+				TextView tv1 = (TextView) layout.findViewById(R.id.dlg_text1);
+				TextView tv2 = (TextView) layout.findViewById(R.id.dlg_text2);
+				tv1.setText(getString(R.string.no_calendar1));
+				tv2.setText(getString(R.string.no_calendar2));
 
 				// layoutで記載したviewをダイアログに設定する
 				AlertDialog.Builder dlg;
@@ -400,8 +406,8 @@ public class TabName extends Activity implements OnClickListener {
 					View layout = getLayoutInflater().inflate(R.layout.dialog,
 							alert);
 					TextView tv1 = (TextView) layout
-							.findViewById(R.id.dialog_text);
-					tv1.setText("何もチェックされていません。");
+							.findViewById(R.id.dlg_text1);
+					tv1.setText(getString(R.string.no_check));
 
 					AlertDialog.Builder dlg;
 					dlg = new AlertDialog.Builder(TabName.this);

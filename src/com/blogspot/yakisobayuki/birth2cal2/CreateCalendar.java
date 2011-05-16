@@ -2,7 +2,6 @@ package com.blogspot.yakisobayuki.birth2cal2;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -36,12 +35,6 @@ public class CreateCalendar extends Activity {
 	private int mCount = 0;
 	private Context mContext;
 
-	// 今日の日付取得
-	final Calendar mCalendar = Calendar.getInstance();
-	final int mYear = mCalendar.get(Calendar.YEAR);
-	final int mMonth = mCalendar.get(Calendar.MONTH);
-	final int mDay = mCalendar.get(Calendar.DAY_OF_MONTH);
-
 	// チェックされた数を取得
 	public CreateCalendar(Activity activity, int Chk_count, Context context) {
 		this.mActivity = activity;
@@ -51,11 +44,11 @@ public class CreateCalendar extends Activity {
 
 	public void CreateStart(List<ContactsStatus> list) {
 		this.mList = list;
-		
+
 		// バックグラウンドの処理前にUIスレッドでダイアログ表示
 		mProgressDialog = new ProgressDialog(mActivity);
 		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		mProgressDialog.setMessage("カレンダーに登録中です");
+		mProgressDialog.setMessage(mActivity.getString(R.string.add_cal));
 		mProgressDialog.setMax(mCount);
 		mProgressDialog.setCancelable(true);
 		mProgressDialog.show();
@@ -92,7 +85,7 @@ public class CreateCalendar extends Activity {
 			bundle.putString("complete", Integer.toString(count));
 			message.setData(bundle);
 			handler.sendMessage(message);
-			
+
 			mProgressDialog.dismiss();
 		}
 	};
@@ -101,14 +94,13 @@ public class CreateCalendar extends Activity {
 		@Override
 		public void handleMessage(Message msg) {
 			// 終わったら完了のダイアログを表示
-			ViewGroup alert = (ViewGroup) mActivity
-					.findViewById(R.id.dialog);
+			ViewGroup alert = (ViewGroup) mActivity.findViewById(R.id.dialog);
 			View layout = mActivity.getLayoutInflater().inflate(
 					R.layout.dialog, alert);
 
-			TextView tv = (TextView) layout.findViewById(R.id.dialog_text);
-			tv.setText("カレンダー登録完了！");
-			
+			TextView tv = (TextView) layout.findViewById(R.id.dlg_text1);
+			tv.setText(mActivity.getString(R.string.add));
+
 			AlertDialog.Builder dlg;
 			dlg = new AlertDialog.Builder(mActivity);
 			dlg.setPositiveButton("OK", null);
@@ -191,21 +183,21 @@ public class CreateCalendar extends Activity {
 			// カレンダーへ登録
 			cr.insert(events, values);
 
-			 // 既に登録されていた場合
+			// 既に登録されていた場合
 		} else if (eventcheck == 1) {
-			 // 該当のイベントIDをURIに付加して処理
-			 Uri pevents = Uri.withAppendedPath(events, id);
-			 values.put("calendar_id", calId);
-			 values.put("title", ContactName + " " + daykind);
-			 values.put("allDay", 1);
-			 values.put("dtstart", startLongDay);
-			 values.put("eventTimezone",
-			 TimeZone.getDefault().getDisplayName(Locale.ENGLISH));
-			 values.put("rrule", rrule);
-			 values.put("duration", "P1D");
-			
-			 // カレンダーを更新
-			 cr.update(pevents, values, null, null);
+			// 該当のイベントIDをURIに付加して処理
+			Uri pevents = Uri.withAppendedPath(events, id);
+			values.put("calendar_id", calId);
+			values.put("title", ContactName + " " + daykind);
+			values.put("allDay", 1);
+			values.put("dtstart", startLongDay);
+			values.put("eventTimezone",
+					TimeZone.getDefault().getDisplayName(Locale.ENGLISH));
+			values.put("rrule", rrule);
+			values.put("duration", "P1D");
+
+			// カレンダーを更新
+			cr.update(pevents, values, null, null);
 		}
 	}
 

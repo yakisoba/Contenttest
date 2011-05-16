@@ -30,7 +30,7 @@ public class SelectCal extends Activity {
 		private String[] calendar;
 		private String[] calId;
 
-		public void setCalendarList(int num) {
+		public CalendarList(int num) {
 			this.calendar = new String[num];
 			this.calId = new String[num];
 		}
@@ -76,8 +76,7 @@ public class SelectCal extends Activity {
 				projection, "access_level = 700", null, null);
 
 		// 生成して、リストの数分String型の要素数を持つように指示
-		CalendarList item = new CalendarList();
-		item.setCalendarList(clist.getCount());
+		CalendarList item = new CalendarList(clist.getCount());
 
 		if (clist != null) {
 			try {
@@ -129,7 +128,7 @@ public class SelectCal extends Activity {
 
 		// ダイアログの表示
 		mAlertDialog = new AlertDialog.Builder(mActivity)
-				.setTitle("カレンダー選択")
+				.setTitle(mActivity.getString(R.string.select_cal))
 				.setSingleChoiceItems(mCalendar_list, button_id,
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog,
@@ -151,7 +150,7 @@ public class SelectCal extends Activity {
 									mCalendar_list[mButton]);
 							e.putString("calendar_list_id", result);
 							e.putInt("calendar_list_num_v112", mButton);
-							e.commit();							
+							e.commit();
 						}
 					}
 				})

@@ -55,32 +55,32 @@ public class TabBirthday extends Activity implements OnClickListener {
 		private String age;
 		private int month_day;
 
-		public SortObj(String sort1, String sort2, String sort3, String sort4,
-				int sort5) {
-			this.displayName = sort1;
-			this.birthday = sort2;
-			this.daykind = sort3;
-			this.age = sort4;
-			this.month_day = sort5;
+		public SortObj(String name, String type, String day, String age,
+				int month_day) {
+			this.displayName = name;
+			this.daykind = type;
+			this.birthday = day;
+			this.age = age;
+			this.month_day = month_day;
 		}
 
-		public String getNum1() {
+		public String getName() {
 			return displayName;
 		}
 
-		public String getNum2() {
-			return birthday;
-		}
-
-		public String getNum3() {
+		public String getType() {
 			return daykind;
 		}
 
-		public String getNum4() {
+		public String getDay() {
+			return birthday;
+		}
+
+		public String getAge() {
 			return age;
 		}
 
-		public int getNum5() {
+		public int getMD() {
 			return month_day;
 		}
 	}
@@ -110,7 +110,7 @@ public class TabBirthday extends Activity implements OnClickListener {
 			// バックグラウンドの処理前にUIスレッドでダイアログ表示
 			progressDialog = new ProgressDialog(TabBirthday.this);
 			progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			progressDialog.setMessage("読込中…");
+			progressDialog.setMessage(getString(R.string.read));
 			progressDialog.setCancelable(false);
 			progressDialog.show();
 		}
@@ -155,36 +155,38 @@ public class TabBirthday extends Activity implements OnClickListener {
 			final ContactsStatus item = getItem(position);
 
 			if (item != null) {
+				TextView displayName, daykind, birthday, age, selkind;
+				final CheckBox checkbox;
+				ImageView image;
 
-				TextView displayName = (TextView) view
-						.findViewById(R.id.ContactsName1);
-				TextView daykind = (TextView) view.findViewById(R.id.DayKind1);
-				TextView birthday = (TextView) view
-						.findViewById(R.id.Birthday1);
-				TextView age = (TextView) view.findViewById(R.id.Age1);
-				final CheckBox chk01 = (CheckBox) view
-						.findViewById(R.id.CheckBox1);
-				ImageView image = (ImageView) view.findViewById(R.id.Image1);
-				TextView selkind = (TextView) view.findViewById(R.id.Age2);
+				displayName = (TextView) view.findViewById(R.id.ContactsName1);
+				daykind = (TextView) view.findViewById(R.id.DayKind1);
+				birthday = (TextView) view.findViewById(R.id.Birthday1);
+				age = (TextView) view.findViewById(R.id.Age1);
+				selkind = (TextView) view.findViewById(R.id.Age2);
+
+				checkbox = (CheckBox) view.findViewById(R.id.CheckBox1);
+				image = (ImageView) view.findViewById(R.id.Image1);
 
 				displayName.setText(item.getDisplayName());
 				daykind.setText(item.getDayKind());
 				birthday.setText(item.getBirth());
-				chk01.setChecked(item.getCheckFlag());
-
-				if (item.getDayKind().equals("誕生日")) {
-					image.setImageResource(R.drawable.heart);
-					selkind.setText("歳");
-				} else if (item.getDayKind().equals("記念日")) {
-					image.setImageResource(R.drawable.star);
-					selkind.setText("周年");
-				}
 				age.setText(item.getAge());
+				checkbox.setChecked(item.getCheckFlag());
+
+				if (item.getDayKind().equals(getString(R.string.birthday))) {
+					image.setImageResource(R.drawable.heart);
+					selkind.setText(getString(R.string.age));
+				} else if (item.getDayKind().equals(
+						getString(R.string.anniversary))) {
+					image.setImageResource(R.drawable.star);
+					selkind.setText(getString(R.string.ani));
+				}
 
 				// CheckBoxをチェックしたときの動作
-				chk01.setOnClickListener(new OnClickListener() {
+				checkbox.setOnClickListener(new OnClickListener() {
 					public void onClick(View v) {
-						if (chk01.isChecked() == true) {
+						if (checkbox.isChecked() == true) {
 							item.setCheckFlag(true);
 						} else {
 							item.setCheckFlag(false);
@@ -209,8 +211,8 @@ public class TabBirthday extends Activity implements OnClickListener {
 				String.valueOf(Event.TYPE_ANNIVERSARY),
 				String.valueOf(Event.TYPE_BIRTHDAY) };
 
-		Cursor c1 = getContentResolver().query(uri, projection, selection, selectionArgs,
-				null);
+		Cursor c1 = getContentResolver().query(uri, projection, selection,
+				selectionArgs, null);
 
 		// 一旦ソート用のリストに格納。(あとでContact用のリストに格納)
 		List<SortObj> sortList = new ArrayList<SortObj>();
@@ -231,9 +233,9 @@ public class TabBirthday extends Activity implements OnClickListener {
 						String daykind = c1.getString(c1
 								.getColumnIndex(Event.TYPE));
 						if (Integer.parseInt(daykind) == 1) {
-							daykind = "記念日";
+							daykind = getString(R.string.anniversary);
 						} else if (Integer.parseInt(daykind) == 3) {
-							daykind = "誕生日";
+							daykind = getString(R.string.birthday);
 						}
 
 						// 今年の誕生日が過ぎたかどうか判定
@@ -249,34 +251,22 @@ public class TabBirthday extends Activity implements OnClickListener {
 						if ((mMonth + 1 < mm)
 								|| ((mMonth + 1 == mm) && (mDay < dd))) { // 過ぎてない
 							age = Integer.toString(mYear - yyyy - 1);
-							month_day = Integer.parseInt(date_tmp.substring(5,
-									7))
-									* 100
-									+ Integer.parseInt(date_tmp
-											.substring(8, 10));
+							month_day = mm * 100 + dd;
 						} else if ((mMonth + 1 == mm) && (mDay == dd)) { // 今日
 							age = Integer.toString(mYear - yyyy);
-							month_day = Integer.parseInt(date_tmp.substring(5,
-									7))
-									* 100
-									+ Integer.parseInt(date_tmp
-											.substring(8, 10));
+							month_day = mm * 100 + dd;
 						} else if ((mMonth + 1 > mm)
 								|| ((mMonth + 1 == mm) && (mDay > dd))) { // 過ぎてる
 							age = Integer.toString(mYear - yyyy);
-							month_day = Integer.parseInt(date_tmp.substring(5,
-									7))
-									* 100
-									+ Integer.parseInt(date_tmp
-											.substring(8, 10)) + 10000;
+							month_day = mm * 100 + dd + 10000;
 						}
 
-						sortList.add(new SortObj(displayName, date_tmp,
-								daykind, age, month_day));
+						sortList.add(new SortObj(displayName, daykind,
+								date_tmp, age, month_day));
 
 						Collections.sort(sortList, new Comparator<SortObj>() {
 							public int compare(SortObj t1, SortObj t2) {
-								return t1.getNum5() - t2.getNum5();
+								return t1.getMD() - t2.getMD();
 							}
 						});
 					}
@@ -288,11 +278,11 @@ public class TabBirthday extends Activity implements OnClickListener {
 			for (SortObj obj : sortList) {
 
 				ContactsStatus item = new ContactsStatus();
-				item.setParam(obj.getNum1(), obj.getNum3(), obj.getNum2(),
-						obj.getNum4());
-		        if(!mList.contains(item)){
+				item.setParam(obj.getName(), obj.getType(), obj.getDay(),
+						obj.getAge());
+				if (!mList.contains(item)) {
 					mList.add(item);
-		        }
+				}
 			}
 		}
 	}
@@ -309,7 +299,7 @@ public class TabBirthday extends Activity implements OnClickListener {
 				}
 				// CheckBoxのテキストを変更
 				CheckBox b = (CheckBox) v;
-				b.setText("チェック解除");
+				b.setText(getString(R.string.check_off));
 
 			} else if (check_full.isChecked() == false) {
 				// リストの分だけCheckBoxをOFFに
@@ -319,7 +309,7 @@ public class TabBirthday extends Activity implements OnClickListener {
 
 				// CheckBoxのテキストを変更
 				CheckBox b = (CheckBox) v;
-				b.setText("全てチェック");
+				b.setText(getString(R.string.check_on));
 			}
 			mAdapter.notifyDataSetChanged();
 
@@ -327,8 +317,7 @@ public class TabBirthday extends Activity implements OnClickListener {
 		} else if (v == button_import) {
 
 			// プリファレンスから登録するカレンダーを取得する
-			SharedPreferences pref = getSharedPreferences("cal_list",
-					MODE_PRIVATE);
+			SharedPreferences pref = getSharedPreferences("cal_list", 0);
 			int calId = Integer.parseInt(pref
 					.getString("calendar_list_id", "0"));
 
@@ -341,11 +330,10 @@ public class TabBirthday extends Activity implements OnClickListener {
 				ViewGroup alert = (ViewGroup) findViewById(R.id.dialog);
 				View layout = getLayoutInflater().inflate(R.layout.dialog,
 						alert);
-				TextView tv1 = (TextView) layout.findViewById(R.id.dialog_text);
-				tv1.setText("カレンダーが登録されていません。");
-				TextView tv2 = (TextView) layout
-						.findViewById(R.id.dialog_text2);
-				tv2.setText("メニューから選択してください。");
+				TextView tv1 = (TextView) layout.findViewById(R.id.dlg_text1);
+				TextView tv2 = (TextView) layout.findViewById(R.id.dlg_text2);
+				tv1.setText(getString(R.string.no_calendar1));
+				tv2.setText(getString(R.string.no_calendar2));
 
 				// layoutで記載したviewをダイアログに設定する
 				AlertDialog.Builder dlg;
@@ -369,8 +357,8 @@ public class TabBirthday extends Activity implements OnClickListener {
 					View layout = getLayoutInflater().inflate(R.layout.dialog,
 							alert);
 					TextView tv1 = (TextView) layout
-							.findViewById(R.id.dialog_text);
-					tv1.setText("何もチェックされていません。");
+							.findViewById(R.id.dlg_text1);
+					tv1.setText(getString(R.string.no_check));
 
 					AlertDialog.Builder dlg;
 					dlg = new AlertDialog.Builder(TabBirthday.this);

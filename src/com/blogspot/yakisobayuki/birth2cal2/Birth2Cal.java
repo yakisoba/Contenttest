@@ -1,7 +1,5 @@
 package com.blogspot.yakisobayuki.birth2cal2;
 
-import java.util.Calendar;
-
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -16,45 +14,6 @@ import android.widget.TabHost;
 import android.widget.TextView;
 
 public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory {
-	// カレンダー表示用
-	String[] mCalendar_list;
-	String[] mCalendar_ID;
-	String result;
-	int mButton;
-	int mButton_y;
-
-	// 今日の日付取得
-	final Calendar mCalendar = Calendar.getInstance();
-	final int mYear = mCalendar.get(Calendar.YEAR);
-	final int mMonth = mCalendar.get(Calendar.MONTH);
-	final int mDay = mCalendar.get(Calendar.DAY_OF_MONTH);
-
-	public class CalendarList {
-		private String[] calendar;
-		private String[] calId;
-
-		public void setCalendarList(int num) {
-			this.calendar = new String[num];
-			this.calId = new String[num];
-		}
-
-		public String[] getCalendarName() {
-			return calendar;
-		}
-
-		public void setCalendarName(String calendar, int num) {
-			this.calendar[num] = calendar;
-		}
-
-		public String[] getCalendarId() {
-			return calId;
-		}
-
-		public void setCalendarId(String calId, int num) {
-			this.calId[num] = calId;
-		}
-	}
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -66,22 +25,28 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 
 		Intent intent;
 
+		// 誕生日順
 		intent = new Intent().setClass(this, TabBirthday.class);
-		View childview1 = new CustomTabContentView(this, "誕生日順",
+		View childview1 = new CustomTabContentView(this,
+				getString(R.string.birth_sort),
 				android.R.drawable.ic_menu_my_calendar);
 		spec = tabHost.newTabSpec("tab1").setIndicator(childview1)
 				.setContent(intent);
 		tabHost.addTab(spec);
 
+		// 年齢順
 		intent = new Intent().setClass(this, TabAge.class);
-		View childview2 = new CustomTabContentView(this, "年齢順",
+		View childview2 = new CustomTabContentView(this,
+				getString(R.string.age_sort),
 				android.R.drawable.ic_menu_sort_by_size);
 		spec = tabHost.newTabSpec("tab2").setIndicator(childview2)
 				.setContent(intent);
 		tabHost.addTab(spec);
 
+		// 名前順
 		intent = new Intent().setClass(this, TabName.class);
-		View childview3 = new CustomTabContentView(this, "名前順",
+		View childview3 = new CustomTabContentView(this,
+				getString(R.string.name_sort),
 				android.R.drawable.ic_menu_sort_alphabetically);
 		spec = tabHost.newTabSpec("tab3").setIndicator(childview3)
 				.setContent(intent);
@@ -118,8 +83,8 @@ public class Birth2Cal extends TabActivity implements TabHost.TabContentFactory 
 		boolean ret = super.onCreateOptionsMenu(menu);
 
 		// menuの追加
-		menu.add(0, Menu.FIRST, Menu.NONE, "カレンダー選択");
-		menu.add(0, Menu.FIRST + 1, Menu.NONE, "設定");
+		menu.add(0, Menu.FIRST, Menu.NONE, getString(R.string.op_cal));
+		menu.add(0, Menu.FIRST + 1, Menu.NONE, getString(R.string.op_setting));
 
 		return ret;
 	}
