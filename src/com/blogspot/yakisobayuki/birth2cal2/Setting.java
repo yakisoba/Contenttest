@@ -204,4 +204,5 @@ public class Setting extends PreferenceActivity {
 			dlg.show();
 		}
 	}
+
 }
